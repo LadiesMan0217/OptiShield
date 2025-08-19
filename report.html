@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Mensal • OptiShield</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+        }
+        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #e4e4e7; --input-border: #d4d4d8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); }
+        
+        .hidden-balance-value { display: none; }
+        body[data-hide-balance="true"] .balance-value { display: none; }
+        body[data-hide-balance="true"] .hidden-balance-value { display: inline; }
+
+        .details-row { display: none; }
+        .summary-row.expanded + .details-row { display: table-row; }
+        .report-view-btn.active, .currency-btn.active { background-color: var(--card-bg); color: var(--fg); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        
+        #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
+        .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media print {
+            body { padding: 0; background-color: white !important; }
+            header, .nav-back, #loader { display: none !important; }
+            .card { box-shadow: none !important; border: 1px solid #ccc !important; }
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+    <div id="loader"><div class="spinner"></div></div>
+    
+    <div id="app-content" class="max-w-7xl mx-auto hidden">
+        <section id="report-view">
+            <header class="flex justify-between items-center mb-6"><div class="flex items-center"><button id="nav-back-report" class="nav-back p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 mr-2"><i data-lucide="arrow-left"></i></button><div class="flex items-center"><button id="report-prev-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-left"></i></button><h1 id="report-title" class="text-xl sm:text-3xl font-bold text-center w-48 sm:w-64">Relatório Mensal</h1><button id="report-next-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-right"></i></button></div></div><div class="flex items-center space-x-2"><button id="print-report-btn" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="printer"></i></button></div></header>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Configurações do Relatório</h2><div class="space-y-4"><div><label class="block text-sm font-medium text-zinc-400 mb-2">Moeda</label><div class="flex space-x-2 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button data-currency="BRL" class="currency-btn w-full py-2 rounded-md font-semibold">Real (BRL)</button><button data-currency="USD" class="currency-btn w-full py-2 rounded-md font-semibold">Dólar (USD)</button></div></div><div id="report-dollar-rate-card" class="hidden"><label class="block text-sm font-medium text-zinc-400">Cotação do Dólar (USD > BRL)</label><p id="report-dollar-rate" class="font-bold text-lg"></p></div></div></div>
+                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Resumo do Mês</h2><div class="space-y-3"><div class="flex justify-between items-center"><span class="text-zinc-400">Resultado Líquido</span><span id="report-net-profit" class="font-bold text-lg"></span></div><div class="flex justify-between items-center"><span class="text-zinc-400">Assertividade</span><span id="report-win-rate" class="font-bold text-lg"></span></div><hr class="border-zinc-200 dark:border-zinc-700"><div class="flex justify-between items-center"><span class="text-zinc-400">Saldo Inicial do Mês</span><div class="flex items-center"><input type="number" id="report-initial-balance" class="w-28 text-right bg-transparent font-bold text-lg outline-none"><i data-lucide="edit-2" class="w-4 h-4 ml-2 text-zinc-500"></i></div></div><div class="flex justify-between items-center"><span class="text-zinc-400">Saldo Final</span><span id="report-final-balance" class="font-bold text-lg"></span></div></div></div>
+                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Métricas Adicionais</h2><div class="grid grid-cols-2 gap-4 text-center"><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Maior Win</p><p id="report-max-win" class="font-bold text-green-500"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Maior Loss</p><p id="report-max-loss" class="font-bold text-red-500"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Média / Op.</p><p id="report-avg-trade" class="font-bold"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Dias Operados</p><p id="report-days-traded" class="font-bold"></p></div></div></div>
+                </div>
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Evolução do Saldo</h2><div class="h-60"><canvas id="report-line-chart"></canvas></div></div>
+                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Desempenho</h2><div class="h-60"><canvas id="report-pie-chart"></canvas></div></div>
+                    <div class="card p-6 rounded-2xl shadow-lg">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4"><h2 class="text-xl font-bold">Histórico de Operações</h2><div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button id="view-daily" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold active">Diário</button><button id="view-full" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold">Completo</button></div></div>
+                        <div class="overflow-x-auto max-h-[40rem]"><table class="w-full text-sm text-left"><thead class="text-xs text-zinc-400 uppercase sticky top-0 bg-zinc-50 dark:bg-zinc-800"><tr id="report-table-header"></tr></thead><tbody id="report-table-body"></tbody></table></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer class="mt-8 text-center text-xs text-zinc-400">
+            <p>© Todos os direitos reservados a Caio Rodrigues – Desenvolvido por Caio Rodrigues</p>
+        </footer>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe3WZmGmglmXb2GjCL5efKvhczp6bp5us",
+            authDomain: "optishield-17bcd.firebaseapp.com",
+            projectId: "optishield-17bcd",
+            storageBucket: "optishield-17bcd.firebasestorage.app",
+            messagingSenderId: "726740371491",
+            appId: "1:726740371491:web:45d5298e6343e1ee450996",
+            measurementId: "G-8B8EX802CQ"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let reportChartInstances = {};
+        let currentReportDate;
+        let reportViewMode = 'daily';
+        let userSettings = {};
+        let userId = null;
+
+        async function fetchDollarRate() { try { const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD'); if (!response.ok) throw new Error('API request failed'); const data = await response.json(); return data.rates.BRL; } catch (error) { console.error("Failed to fetch dollar rate:", error); return null; } }
+        function formatCurrency(value, currency) { const options = { style: 'currency', currency: currency || userSettings.currency }; const locale = (currency || userSettings.currency) === 'BRL' ? 'pt-BR' : 'en-US'; return new Intl.NumberFormat(locale, options).format(value || 0); }
+        function formatCurrencyWithHiding(value, currency) { return userSettings.hideBalance ? "----" : formatCurrency(value, currency); }
+
+        async function renderReportView(year, month) {
+            currentReportDate = new Date(year, month, 1);
+            document.getElementById('report-title').textContent = `${currentReportDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}`;
+            
+            const monthKey = `${year}-${month}`;
+            const monthlyInitialBalance = userSettings.monthlyBalances[monthKey] || 0;
+            document.getElementById('report-initial-balance').value = monthlyInitialBalance.toFixed(2);
+
+            document.querySelectorAll('.currency-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.currency === userSettings.currency));
+            
+            const dollarCard = document.getElementById('report-dollar-rate-card');
+            if (userSettings.currency === 'USD') {
+                dollarCard.classList.remove('hidden');
+                const rate = await fetchDollarRate();
+                document.getElementById('report-dollar-rate').textContent = rate ? formatCurrency(rate, 'BRL') : 'N/A';
+            } else {
+                dollarCard.classList.add('hidden');
+            }
+
+            const tradesColRef = collection(db, "users", userId, "trades");
+            const startOfMonth = new Date(year, month, 1);
+            const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
+            const q = query(tradesColRef, where("date", ">=", startOfMonth.toISOString().split('T')[0]), where("date", "<=", endOfMonth.toISOString().split('T')[0]));
+            const querySnapshot = await getDocs(q);
+            const trades = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+
+            const netProfit = trades.reduce((acc, t) => acc + t.profit, 0);
+            const wins = trades.filter(t => t.result === 'win').length;
+            const winRate = trades.length > 0 ? (wins / trades.length * 100).toFixed(1) : "0.0";
+            const finalBalance = monthlyInitialBalance + netProfit;
+            
+            document.getElementById('report-net-profit').textContent = formatCurrencyWithHiding(netProfit);
+            document.getElementById('report-win-rate').textContent = `${winRate}%`;
+            document.getElementById('report-final-balance').textContent = formatCurrencyWithHiding(finalBalance);
+
+            const maxWin = Math.max(0, ...trades.filter(t=>t.result ==='win').map(t => t.profit));
+            const maxLoss = Math.min(0, ...trades.filter(t=>t.result ==='loss').map(t => t.profit));
+            document.getElementById('report-max-win').textContent = formatCurrencyWithHiding(maxWin);
+            document.getElementById('report-max-loss').textContent = formatCurrencyWithHiding(maxLoss);
+            document.getElementById('report-avg-trade').textContent = trades.length > 0 ? formatCurrencyWithHiding(netProfit / trades.length) : '----';
+            document.getElementById('report-days-traded').textContent = [...new Set(trades.map(t => t.date))].length;
+
+            renderReportTable(trades, monthlyInitialBalance);
+            renderCharts(trades, monthlyInitialBalance);
+        }
+
+        function renderReportTable(trades, initialBalance) {
+            const tableHeader = document.getElementById('report-table-header');
+            const tableBody = document.getElementById('report-table-body');
+            tableBody.innerHTML = '';
+
+            if (reportViewMode === 'daily') {
+                tableHeader.innerHTML = `<th scope="col" class="px-4 py-3">Data</th><th scope="col" class="px-4 py-3">Placar</th><th scope="col" class="px-4 py-3">Assertividade</th><th scope="col" class="px-4 py-3">Resultado</th>`;
+                const tradesByDay = trades.reduce((acc, trade) => { (acc[trade.date] = acc[trade.date] || []).push(trade); return acc; }, {});
+
+                Object.keys(tradesByDay).sort().forEach(date => {
+                    const dayTrades = tradesByDay[date];
+                    const dayWins = dayTrades.filter(t => t.result === 'win').length;
+                    const dayLosses = dayTrades.length - dayWins;
+                    const dayProfit = dayTrades.reduce((sum, t) => sum + t.profit, 0);
+                    const dayWinRate = (dayWins / dayTrades.length * 100).toFixed(1);
+
+                    const summaryRow = document.createElement('tr');
+                    summaryRow.className = 'summary-row border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer';
+                    summaryRow.dataset.date = date;
+                    summaryRow.innerHTML = `<td class="px-4 py-3 font-semibold">${new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</td><td class="px-4 py-3">${dayWins} x ${dayLosses}</td><td class="px-4 py-3">${dayWinRate}%</td><td class="px-4 py-3 font-bold ${dayProfit >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrencyWithHiding(dayProfit)}</td>`;
+                    
+                    const detailsRow = document.createElement('tr');
+                    detailsRow.className = 'details-row';
+                    const note = userSettings.dailyNotes[date] || '';
+                    detailsRow.innerHTML = `
+                        <td colspan="4" class="p-4 bg-zinc-50 dark:bg-zinc-800/50">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><h4 class="font-bold mb-2">Operações do Dia</h4><div class="space-y-1 text-xs">${dayTrades.map(t => `<div class="flex justify-between"><span>${t.result.toUpperCase()} ${formatCurrencyWithHiding(t.value)}</span><span class="${t.profit >= 0 ? 'text-green-500' : 'text-red-500'}">${t.profit > 0 ? '+' : ''}${formatCurrencyWithHiding(t.profit)}</span></div>`).join('')}</div></div>
+                                <div><h4 class="font-bold mb-2">Diário e Anotações</h4><textarea class="daily-note-textarea w-full h-24 p-2 text-sm bg-zinc-100 dark:bg-zinc-700 rounded-md" data-date="${date}" placeholder="Anotações sobre o dia...">${note}</textarea></div>
+                            </div>
+                        </td>`;
+                    
+                    tableBody.appendChild(summaryRow);
+                    tableBody.appendChild(detailsRow);
+                });
+            } else { // 'full' view
+                tableHeader.innerHTML = `<th scope="col" class="px-4 py-3">Data</th><th scope="col" class="px-4 py-3">Resultado</th><th scope="col" class="px-4 py-3">Valor</th><th scope="col" class="px-4 py-3">Lucro/Prej.</th><th scope="col" class="px-4 py-3">Saldo Acum.</th>`;
+                let cumulativeBalance = initialBalance;
+                trades.forEach(trade => {
+                    cumulativeBalance += trade.profit;
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-zinc-200 dark:border-zinc-700';
+                    row.innerHTML = `<td class="px-4 py-2">${new Date(trade.date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</td><td class="px-4 py-2 font-bold ${trade.result === 'win' ? 'text-green-500' : 'text-red-500'}">${trade.result.toUpperCase()}</td><td class="px-4 py-2">${formatCurrencyWithHiding(trade.value)}</td><td class="px-4 py-2">${formatCurrencyWithHiding(trade.profit)}</td><td class="px-4 py-2">${formatCurrencyWithHiding(cumulativeBalance)}</td>`;
+                    tableBody.appendChild(row);
+                });
+            }
+        }
+
+        function renderCharts(trades, initialBalance){
+            const wins = trades.filter(t => t.result === 'win').length;
+            const chartData = {
+                labels: trades.map((trade, index) => index + 1),
+                balance: trades.reduce((acc, trade) => [...acc, (acc.length > 0 ? acc[acc.length - 1] : initialBalance) + trade.profit], [initialBalance])
+            };
+            
+            const chartOptions = {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') } } },
+                scales: { x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } }, y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } } }
+            };
+
+            if(reportChartInstances.line) reportChartInstances.line.destroy();
+            reportChartInstances.line = new Chart(document.getElementById('report-line-chart'), { type: 'line', data: { labels: chartData.labels, datasets: [{ label: 'Evolução do Saldo', data: chartData.balance.slice(1), borderColor: '#3b82f6', tension: 0.1, fill: false }] }, options: chartOptions });
+
+            if(reportChartInstances.pie) reportChartInstances.pie.destroy();
+            reportChartInstances.pie = new Chart(document.getElementById('report-pie-chart'), { type: 'doughnut', data: { labels: ['Wins', 'Losses'], datasets: [{ data: [wins, trades.length - wins], backgroundColor: ['#16a34a', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') } } } } });
+        }
+
+        function initializeEventListeners() {
+            document.getElementById('nav-back-report').addEventListener('click', () => { window.history.back(); });
+            document.getElementById('print-report-btn').addEventListener('click', () => window.print());
+            
+            document.getElementById('report-prev-month').addEventListener('click', () => {
+                currentReportDate.setMonth(currentReportDate.getMonth() - 1);
+                renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+            });
+            document.getElementById('report-next-month').addEventListener('click', () => {
+                currentReportDate.setMonth(currentReportDate.getMonth() + 1);
+                renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+            });
+
+            document.querySelectorAll('.report-view-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    reportViewMode = e.currentTarget.id === 'view-daily' ? 'daily' : 'full';
+                    document.querySelectorAll('.report-view-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+                });
+            });
+
+            document.getElementById('report-table-body').addEventListener('click', (e) => {
+                const summaryRow = e.target.closest('.summary-row');
+                if (summaryRow) summaryRow.classList.toggle('expanded');
+            });
+
+            document.getElementById('report-table-body').addEventListener('change', async (e) => {
+                if (e.target.classList.contains('daily-note-textarea')) {
+                    const date = e.target.dataset.date;
+                    userSettings.dailyNotes[date] = e.target.value;
+                    await setDoc(doc(db, "users", userId), { dailyNotes: userSettings.dailyNotes }, { merge: true });
+                }
+            });
+
+            document.getElementById('report-initial-balance').addEventListener('change', async (e) => {
+                const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+                userSettings.monthlyBalances[monthKey] = parseFloat(e.target.value) || 0;
+                await setDoc(doc(db, "users", userId), { monthlyBalances: userSettings.monthlyBalances }, { merge: true });
+                renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+            });
+
+            document.querySelectorAll('.currency-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    userSettings.currency = btn.dataset.currency;
+                    await setDoc(doc(db, "users", userId), { currency: userSettings.currency }, { merge: true });
+                    renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+                });
+            });
+        }
+
+        function main() {
+            onAuthStateChanged(auth, async (user) => {
+                if(user) {
+                    userId = user.uid;
+                    const settingsDocRef = doc(db, "users", userId);
+                    const docSnap = await getDoc(settingsDocRef);
+                    
+                    const defaultSettings = { currency: "BRL", initialBalance: 0, hideBalance: false, monthlyBalances: {}, dailyNotes: {} };
+                    userSettings = docSnap.exists() ? { ...defaultSettings, ...docSnap.data() } : defaultSettings;
+                    
+                    document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+                    document.body.setAttribute('data-hide-balance', userSettings.hideBalance);
+                    lucide.createIcons();
+
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const year = parseInt(urlParams.get('year'));
+                    const month = parseInt(urlParams.get('month'));
+
+                    const dateToLoad = !isNaN(year) && !isNaN(month) ? new Date(year, month) : new Date();
+                    
+                    await renderReportView(dateToLoad.getFullYear(), dateToLoad.getMonth());
+                    
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('app-content').classList.remove('hidden');
+                    
+                    initializeEventListeners();
+
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+
+        main();
+    </script>
+</body>
+</html>

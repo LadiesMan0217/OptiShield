@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bem-vindo(a) • OptiShield</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+        }
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0; background: var(--bg); color: var(--fg); font: 400 14px/1.5 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
+        }
+        .center { min-height: 100%; display: grid; place-items: center; padding: 24px; }
+        .login-card { width: min(94vw, 420px); padding: 32px; border-radius: 16px; background: var(--card-bg); border: 1px solid var(--card-border); box-shadow: 0 10px 40px rgba(0, 0, 0, .5); }
+        .brand-header { text-align: center; margin-bottom: 24px; }
+        .brand-header p { color: var(--fg-secondary); margin-top: 4px; }
+        .login-card h2 { margin: 0 0 8px; font-weight: 700; font-size: 22px; text-align: center; }
+        .login-card .subtitle { font-size: 14px; color: var(--fg-secondary); text-align: center; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; position: relative;}
+        .form-group label { display: block; font-weight: 500; font-size: 12px; color: var(--fg-secondary); margin-bottom: 6px; text-align: left; }
+        .input-wrapper { position: relative; }
+        .input-wrapper svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--fg-secondary); transition: color .2s; }
+        .login-card input { width: 100%; padding: 12px 14px 12px 42px; border-radius: 10px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--fg); outline: none; transition: all .2s; }
+        .login-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, .2); }
+        .login-card input:focus + svg { color: var(--accent); }
+        .validation-message { font-size: 12px; margin-top: 6px; min-height: 18px; transition: color .2s; text-align: left; }
+        .text-success { color: var(--success); }
+        .text-warning { color: var(--warning); }
+        .text-danger { color: var(--danger); }
+        .tabs { display: flex; border-bottom: 1px solid var(--card-border); margin-bottom: 24px; }
+        .tab { flex: 1; padding-bottom: 12px; font-size: 15px; font-weight: 500; text-align: center; color: var(--fg-secondary); border: none; background: transparent; border-bottom: 2px solid transparent; cursor: pointer; transition: color .2s, border-color .2s, font-weight .2s; outline: none; }
+        .tab.active { border-bottom-color: var(--accent); color: var(--fg); font-weight: 700; }
+        .btn { width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--accent); color: #ffffff; font-weight: 700; transition: transform .1s ease, background-color .2s ease; }
+        .btn:hover:not(:disabled) { background-color: #60a5fa; }
+        .btn:disabled { cursor: not-allowed; opacity: 0.6; }
+        .btn:active:not(:disabled) { transform: scale(.98); }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--fg-secondary); font-size: 12px; margin: 24px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--card-border); }
+        .divider:not(:empty)::before { margin-right: .5em; }
+        .divider:not(:empty)::after { margin-left: .5em; }
+        .social-login { display: flex; gap: 16px; }
+        .social-btn { flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px; border-radius: 10px; border: 1px solid var(--input-border); background: transparent; cursor: pointer; transition: background-color .2s; }
+        .social-btn:hover { background-color: var(--input-bg); }
+        .social-btn svg { width: 20px; height: 20px; }
+        .name-group { display: flex; gap: 16px; }
+        .name-group .form-group { flex: 1; }
+        .forgot-password { text-align: right; font-size: 12px; margin-top: -8px; margin-bottom: 16px; }
+        .forgot-password a { color: var(--fg-secondary); text-decoration: none; transition: color .2s; }
+        .forgot-password a:hover { color: var(--accent); }
+        .mantra { text-align: center; margin-top: 24px; color: var(--fg-secondary); font-style: italic; min-height: 20px; transition: opacity 0.5s ease-in-out; }
+        .hidden { display: none; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--card-border); width: min(94vw, 400px); transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-top: 0; text-align: center; font-size: 22px; font-weight: 700; }
+        .modal-content p { text-align: center; color: var(--fg-secondary); font-size: 14px; margin-bottom: 24px; }
+        .modal-content .form-group { text-align: left; }
+    </style>
+</head>
+<body>
+    <main class="center">
+        <div>
+            <div class="login-card">
+                <div class="brand-header">
+                    <h1 class="text-4xl sm:text-5xl font-black tracking-tighter bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text">
+                        OptiShield
+                    </h1>
+                    <p>Sua ferramenta de gestão para operações em OB.</p>
+                </div>
+
+                <div class="tabs">
+                    <button id="tab-login" class="tab active">Entrar</button>
+                    <button id="tab-signup" class="tab">Criar Conta</button>
+                </div>
+
+                <!-- Formulário de Login -->
+                <form id="login-form">
+                    <h2 class="subtitle">Faça login para acessar seu diário.</h2>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <div class="input-wrapper">
+                            <input id="login-email" type="email" placeholder="seu@email.com" required>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Senha</label>
+                        <div class="input-wrapper">
+                            <input id="login-password" type="password" placeholder="••••••••" required>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#" id="forgot-password-link">Ops, esqueci minha senha</a>
+                    </div>
+                    <button class="btn" type="submit">Entrar</button>
+                </form>
+
+                <!-- Formulário de Cadastro -->
+                <form id="signup-form" class="hidden">
+                    <h2 class="subtitle">Comece sua jornada de alta performance.</h2>
+                    <div class="name-group">
+                        <div class="form-group">
+                            <label for="signup-name">Nome</label>
+                            <div class="input-wrapper">
+                                <input id="signup-name" type="text" placeholder="Seu nome" required>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <p id="signup-name-validation" class="validation-message"></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="signup-surname">Sobrenome</label>
+                            <div class="input-wrapper">
+                                <input id="signup-surname" type="text" placeholder="Seu sobrenome" required>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <p id="signup-surname-validation" class="validation-message"></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Seu melhor e-mail</label>
+                        <div class="input-wrapper">
+                            <input id="signup-email" type="email" placeholder="Para mantermos contato" required>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        </div>
+                        <p id="signup-email-validation" class="validation-message"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Crie uma senha segura</label>
+                        <div class="input-wrapper">
+                            <input id="signup-password" type="password" placeholder="Algo que só você vai decifrar 😉" required>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <p id="signup-password-validation" class="validation-message"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-confirm-password">Confirme a senha</label>
+                        <div class="input-wrapper">
+                            <input id="signup-confirm-password" type="password" placeholder="Só pra ter certeza" required>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <p id="signup-confirm-password-validation" class="validation-message"></p>
+                    </div>
+                    <button class="btn" type="submit">Criar minha conta</button>
+                </form>
+
+                <p id="feedback-message" class="validation-message text-center"></p>
+                <p id="mantra" class="mantra"></p>
+
+                <div class="divider">ou</div>
+
+                <div class="social-login">
+                    <button id="google-login" class="social-btn" aria-label="Entrar com Google">
+                        <svg role="img" fill="#fff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Google</title><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>
+                    </button>
+                    <button id="facebook-login" class="social-btn" aria-label="Entrar com Facebook">
+                         <svg role="img" fill="#fff" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Facebook</title><path d="M23.9981 11.9991C23.9981 5.37216 18.626 0 11.9991 0C5.37216 0 0 5.37216 0 11.9991C0 17.9882 4.38789 22.9522 10.1242 23.8524V15.4676H7.07758V11.9991H10.1242V9.35553C10.1242 6.34826 11.9156 4.68714 14.6564 4.68714C15.9702 4.68714 17.3424 4.92149 17.3424 4.92149V7.87439H15.8294C14.3388 7.87439 13.8739 8.79933 13.8739 9.74824V11.9991H17.2018L16.6698 15.4676H13.8739V23.8524C19.6103 22.9522 23.9981 17.9882 23.9981 11.9991Z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <footer class="text-center text-xs text-zinc-400 mt-8">
+                <p>© Todos os direitos reservados a Caio Rodrigues – Desenvolvido por Caio Rodrigues</p>
+            </footer>
+        </div>
+    </main>
+
+    <!-- Modal de Recuperação de Senha -->
+    <div id="reset-password-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Redefinir Senha</h2>
+            <p>Enviaremos um link para o seu e-mail para você criar uma nova senha.</p>
+            <form id="reset-password-form">
+                <div class="form-group">
+                    <label for="reset-email">Seu e-mail de cadastro</label>
+                    <div class="input-wrapper">
+                        <input id="reset-email" type="email" placeholder="seu@email.com" required>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    </div>
+                </div>
+                <button class="btn" type="submit">Enviar Link</button>
+            </form>
+            <p id="reset-feedback" class="validation-message text-center"></p>
+            <button id="close-modal-btn" style="background: none; border: none; color: var(--fg-secondary); cursor: pointer; display: block; margin: 16px auto 0; font-size: 12px;">Voltar para o login</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, FacebookAuthProvider, signInWithPopup, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe3WZmGmglmXb2GjCL5efKvhczp6bp5us",
+            authDomain: "optishield-17bcd.firebaseapp.com",
+            projectId: "optishield-17bcd",
+            storageBucket: "optishield-17bcd.firebasestorage.app",
+            messagingSenderId: "726740371491",
+            appId: "1:726740371491:web:45d5298e6343e1ee450996",
+            measurementId: "G-8B8EX802CQ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const tabLogin = document.getElementById('tab-login');
+        const tabSignup = document.getElementById('tab-signup');
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const mantraEl = document.getElementById('mantra');
+        const resetModal = document.getElementById('reset-password-modal');
+        const resetForm = document.getElementById('reset-password-form');
+        const resetFeedback = document.getElementById('reset-feedback');
+
+        function switchTab(activeTab) {
+            const isLogin = activeTab === 'login';
+            loginForm.classList.toggle('hidden', !isLogin);
+            signupForm.classList.toggle('hidden', isLogin);
+            tabLogin.classList.toggle('active', isLogin);
+            tabSignup.classList.toggle('active', !isLogin);
+            if(feedbackMessage) feedbackMessage.textContent = '';
+        }
+        tabLogin.addEventListener('click', () => switchTab('login'));
+        tabSignup.addEventListener('click', () => switchTab('signup'));
+
+        function handleAuthError(error, btn, defaultText) {
+            feedbackMessage.className = 'validation-message text-danger text-center';
+            if (error.code === 'auth/email-already-in-use') feedbackMessage.textContent = 'Este email já está em uso.';
+            else if (error.code === 'auth/weak-password') feedbackMessage.textContent = 'A senha é muito fraca.';
+            else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') feedbackMessage.textContent = 'Email ou senha inválidos.';
+            else feedbackMessage.textContent = 'Ocorreu um erro. Tente novamente.';
+            if(btn) {
+                btn.disabled = false;
+                btn.textContent = defaultText;
+            }
+        }
+
+        function showSuccessAndRedirect(message) {
+            feedbackMessage.className = 'validation-message text-success text-center';
+            feedbackMessage.textContent = message;
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.btn');
+            btn.disabled = true;
+            btn.textContent = 'Verificando...';
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showSuccessAndRedirect('Login bem-sucedido! Redirecionando...');
+            } catch (error) {
+                handleAuthError(error, btn, 'Entrar');
+            }
+        });
+
+        signupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!validateAllSignUpFields()) return;
+            const btn = e.target.querySelector('.btn');
+            btn.disabled = true;
+            btn.textContent = 'Criando...';
+            const name = document.getElementById('signup-name').value;
+            const surname = document.getElementById('signup-surname').value;
+            const fullName = `${name.trim()} ${surname.trim()}`.trim();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: fullName });
+                showSuccessAndRedirect('Conta criada com sucesso! Redirecionando...');
+            } catch (error) {
+                handleAuthError(error, btn, 'Criar minha conta');
+            }
+        });
+
+        document.getElementById('google-login').addEventListener('click', async () => {
+            try { 
+                await signInWithPopup(auth, new GoogleAuthProvider());
+                showSuccessAndRedirect('Bem-vindo(a)! Redirecionando...');
+            } catch (error) { 
+                handleAuthError(error, null, '');
+                feedbackMessage.textContent = "Erro ao logar com Google."; 
+            }
+        });
+        document.getElementById('facebook-login').addEventListener('click', async () => {
+            try { 
+                await signInWithPopup(auth, new FacebookAuthProvider()); 
+                showSuccessAndRedirect('Bem-vindo(a)! Redirecionando...');
+            } catch (error) { 
+                handleAuthError(error, null, '');
+                feedbackMessage.textContent = "Erro ao logar com Facebook."; 
+            }
+        });
+
+        // --- Recuperação de Senha ---
+        document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            resetModal.classList.add('visible');
+        });
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            resetModal.classList.remove('visible');
+            resetFeedback.textContent = '';
+        });
+        resetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.btn');
+            btn.disabled = true;
+            btn.textContent = "Enviando...";
+            const email = document.getElementById('reset-email').value;
+            try {
+                await sendPasswordResetEmail(auth, email);
+                resetFeedback.className = 'validation-message text-success text-center';
+                resetFeedback.textContent = 'Link enviado! Verifique seu e-mail.';
+            } catch (error) {
+                resetFeedback.className = 'validation-message text-danger text-center';
+                resetFeedback.textContent = 'Não foi possível encontrar este e-mail.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Enviar Link";
+            }
+        });
+
+        // --- Validação em tempo real ---
+        const validations = {
+            name: { validate: (val) => val.trim().length > 1, message: "Seu nome parece um pouco curto." },
+            surname: { validate: (val) => val.trim().length > 1, message: "Seu sobrenome parece um pouco curto." },
+            email: { validate: (val) => /\S+@\S+\.\S+/.test(val), message: "Ops, este e-mail não parece válido." },
+            password: {
+                validate: (val) => {
+                    const strength = { weak: val.length >= 6, medium: /(?=.*[A-Z])|(?=.*[0-9])|(?=.*[!@#\$%\^&\*])/.test(val) && val.length >= 8, strong: /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])/.test(val) && val.length >= 8 };
+                    if (strength.strong) return { valid: true, message: "Senha forte! Ótima escolha.", level: 'success' };
+                    if (strength.medium) return { valid: true, message: "Boa senha! Adicionar um símbolo a deixaria perfeita.", level: 'warning' };
+                    if (strength.weak) return { valid: true, message: "Senha fraca. Tente combinar letras e números.", level: 'warning' };
+                    return { valid: false, message: "A senha precisa ter pelo menos 6 caracteres." };
+                }
+            },
+            'confirm-password': { validate: (val, pass) => val === pass && val.length > 0, message: "As senhas não coincidem. Vamos tentar de novo?" }
+        };
+
+        function setValidationMessage(el, { message = '', level = 'danger' } = {}) {
+            el.textContent = message;
+            el.className = `validation-message text-${level}`;
+        }
+
+        function validateField(input) {
+            const field = input.id.replace('signup-', '');
+            const messageEl = document.getElementById(`${input.id}-validation`);
+            if (!messageEl) return true;
+            if (!input.value) { 
+                setValidationMessage(messageEl); 
+                return false; 
+            }
+            
+            let result, isValid;
+            switch (field) {
+                case 'password':
+                    result = validations.password.validate(input.value);
+                    setValidationMessage(messageEl, result);
+                    return result.valid;
+                case 'confirm-password':
+                    const pass = document.getElementById('signup-password').value;
+                    isValid = validations['confirm-password'].validate(input.value, pass);
+                    setValidationMessage(messageEl, isValid ? { message: "Tudo certo!", level: 'success' } : { message: validations['confirm-password'].message });
+                    return isValid;
+                default:
+                    isValid = validations[field].validate(input.value);
+                    setValidationMessage(messageEl, isValid ? { message: "Perfeito!", level: 'success' } : { message: validations[field].message });
+                    return isValid;
+            }
+        }
+
+        function validateAllSignUpFields() {
+            const isNameValid = validateField(document.getElementById('signup-name'));
+            const isSurnameValid = validateField(document.getElementById('signup-surname'));
+            const isEmailValid = validateField(document.getElementById('signup-email'));
+            const isPasswordValid = validateField(document.getElementById('signup-password'));
+            const isConfirmPasswordValid = validateField(document.getElementById('signup-confirm-password'));
+            return isNameValid && isSurnameValid && isEmailValid && isPasswordValid && isConfirmPasswordValid;
+        }
+
+        ['signup-name', 'signup-surname', 'signup-email'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => validateField(e.target));
+        });
+        document.getElementById('signup-password').addEventListener('input', (e) => {
+            validateField(e.target);
+            validateField(document.getElementById('signup-confirm-password'));
+        });
+        document.getElementById('signup-confirm-password').addEventListener('input', (e) => validateField(e.target));
+
+        // --- Mantra Dinâmico ---
+        const frases = [ "Controle a mente, domine o mercado.", "Risco calculado, vitória conquistada.", "Emoção é inimiga, estratégia é aliada.", "Perder faz parte, desistir não.", "Lucro vem de disciplina, não de sorte.", "Cada trade é um passo, não um salto.", "Medo é temporário, aprendizado é eterno.", "Foco hoje, liberdade amanhã.", "O mercado recompensa quem espera e age certo.", "Confie no plano, não na intuição." ];
+        let i = 0;
+        mantraEl.textContent = frases[0];
+        setInterval(() => {
+            i = (i + 1) % frases.length;
+            mantraEl.style.opacity = 0;
+            setTimeout(() => {
+                mantraEl.textContent = frases[i];
+                mantraEl.style.opacity = 1;
+            }, 500);
+        }, 5000);
+        mantraEl.style.transition = 'opacity 0.5s';
+        
+        // --- Define a aba de Login como padrão ---
+        switchTab('login');
+    </script>
+</body>
+</html>

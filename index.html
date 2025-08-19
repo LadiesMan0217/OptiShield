@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiShield • Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+        }
+        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #e4e4e7; --input-border: #d4d4d8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; padding-bottom: 80px; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); }
+        .day-cell { background-color: var(--card-bg); border: 1px solid var(--card-border); transition: transform 0.2s, background-color 0.2s; }
+        .day-cell:hover:not(.weekend) { transform: scale(1.05); z-index: 10; }
+        .day-win { background-color: rgba(22, 163, 74, 0.1); border-color: var(--success); }
+        .day-loss { background-color: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
+        .weekend { background-color: rgba(113, 113, 122, 0.1); }
+        .page { display: none; animation: fadeIn 0.5s; }
+        body[data-view="dashboard"] #dashboard-view, body[data-view="trader"] #trader-view { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .hidden-balance-value { display: none; }
+        body[data-hide-balance="true"] .balance-value { display: none; }
+        body[data-hide-balance="true"] .hidden-balance-value { display: inline; }
+        .filter-btn.active { background-color: var(--card-bg); color: var(--fg); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        #calendar-tooltip { transition: opacity 0.2s, transform 0.2s; }
+        
+        #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
+        .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { display: flex; opacity: 1; }
+        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--card-border); width: min(94vw, 400px); transform: scale(0.95); transition: transform 0.3s ease; text-align: center; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-top: 0; font-size: 22px; font-weight: 700; }
+        .modal-content p { color: var(--fg-secondary); font-size: 14px; margin-bottom: 24px; }
+        .btn { width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--accent); color: #ffffff; font-weight: 700; transition: transform .1s ease, background-color .2s ease; }
+        .btn-secondary { background: var(--input-bg); color: var(--fg); }
+    </style>
+</head>
+<body data-view="dashboard" class="p-4 sm:p-6">
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <div id="app-content" class="hidden">
+        <!-- User Welcome Header -->
+        <div id="user-welcome" class="absolute top-4 left-4 flex items-center gap-3 hidden">
+            <img id="user-avatar" src="" alt="Avatar do usuário" class="w-10 h-10 rounded-full border-2 border-zinc-700">
+            <div>
+                <p id="user-greeting" class="text-sm font-medium"></p>
+                <a href="login.html" id="login-prompt" class="text-xs text-blue-400 hover:underline">Fazer Login</a>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <div id="login-required-modal" class="modal-overlay">
+            <div class="modal-content">
+                <h2>Acesso Restrito</h2>
+                <p>Ei, faça login para ter acesso a todos os recursos e salvar seu progresso.</p>
+                <button id="go-to-login-btn" class="btn">Fazer Login</button>
+                <button id="close-login-modal-btn" class="btn btn-secondary">Continuar como Visitante</button>
+            </div>
+        </div>
+
+        <div id="journal-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-40 p-4">
+            <div class="card w-full max-w-lg p-6 rounded-2xl shadow-lg transform transition-transform scale-95" id="journal-modal-content">
+                <div class="flex justify-between items-center mb-4"><h2 class="text-2xl font-bold">Diário do Dia</h2><button id="close-journal-modal" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700"><i data-lucide="x"></i></button></div>
+                <p id="journal-date" class="mb-4 text-zinc-400"></p>
+                <textarea id="journal-textarea" class="w-full h-48 p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Como foi seu dia? Anote suas percepções, erros e acertos..."></textarea>
+                <button id="save-journal-btn" class="mt-4 w-full py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">Salvar</button>
+            </div>
+        </div>
+
+        <div class="max-w-7xl mx-auto">
+            <!-- DASHBOARD VIEW -->
+            <section id="dashboard-view" class="page max-w-4xl mx-auto">
+                <header class="relative flex justify-center items-center mb-8 pt-16 sm:pt-4 h-20">
+                    <div class="text-center">
+                        <h1 class="text-5xl sm:text-6xl font-black tracking-tighter bg-gradient-to-r from-blue-500 to-cyan-400 text-transparent bg-clip-text">
+                            OptiShield
+                        </h1>
+                    </div>
+                    <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center space-x-2">
+                        <button id="toggle-calendar-profit" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="eye"></i></button>
+                        <button id="theme-toggle-dash" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="sun" class="hidden"></i><i data-lucide="moon"></i></button>
+                    </div>
+                </header>
+                
+                <div id="calendar-header" class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><div class="flex items-center"><button id="prev-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-left"></i></button><h2 id="month-year" class="text-xl font-bold cursor-pointer hover:text-blue-500 transition-colors text-center w-48"></h2><button id="next-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-right"></i></button></div><div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button data-filter="weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Semanal</button><button data-filter="bi-weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Quinzenal</button><button data-filter="monthly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold active">Mensal</button></div></div>
+                <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
+                <div id="calendar-tooltip" class="fixed hidden bg-zinc-900 text-white text-xs rounded-lg py-1 px-3 z-50 opacity-0 -translate-y-2 pointer-events-none"></div>
+                <button id="fab-add-trade" class="fixed bottom-24 right-6 sm:right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110"><i data-lucide="plus" class="h-8 w-8"></i></button>
+                
+                <!-- FOOTER -->
+                <footer class="text-center text-xs text-zinc-400 mt-12">
+                    <p>© Todos os direitos reservados a Caio Rodrigues – Desenvolvido por Caio Rodrigues</p>
+                </footer>
+            </section>
+
+            <!-- DIÁRIO TRADER VIEW -->
+            <section id="trader-view" class="page max-w-4xl mx-auto">
+                <header class="flex justify-between items-center mb-6"><div class="flex items-center"><button class="nav-back p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 mr-2"><i data-lucide="arrow-left"></i></button><h1 class="text-3xl font-bold">Registro de Operação</h1></div><button id="open-journal-modal" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 flex items-center space-x-2"><i data-lucide="book-marked"></i><span class="hidden sm:inline">Diário do Dia</span></button></header>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-1 card p-6 rounded-2xl shadow-lg"><h2 class="text-2xl font-bold mb-1">Registrar Ordem</h2><p id="form-date" class="text-sm text-zinc-400 mb-6"></p><form id="trade-form" class="space-y-4"><div><label for="payout" class="block text-sm font-medium text-zinc-400">Payout (%)</label><input type="number" id="payout" value="85" step="0.01" class="w-full mt-1 p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 outline-none transition"></div><div><label id="value-label" for="value" class="block text-sm font-medium text-zinc-400">Valor da Entrada</label><input type="number" id="value" placeholder="10.00" step="0.01" class="w-full mt-1 p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 outline-none transition"></div><div><label class="block text-sm font-medium text-zinc-400">Lucro Esperado</label><p id="expected-profit" class="mt-1 p-3 text-zinc-300 font-semibold">R$ 0.00</p></div><div class="flex space-x-4 pt-4"><button type="submit" data-result="win" class="w-full py-3 font-bold text-white bg-green-600 hover:bg-green-700 rounded-lg transition-transform hover:scale-105">WIN</button><button type="submit" data-result="loss" class="w-full py-3 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-transform hover:scale-105">LOSS</button></div></form></div><div class="lg:col-span-2 card p-6 rounded-2xl shadow-lg"><h2 class="text-2xl font-bold mb-6">Placar do Dia</h2><div class="grid grid-cols-3 gap-4 text-center mb-8"><div class="bg-green-500/10 p-4 rounded-lg"><p class="text-sm text-green-400">Wins</p><p id="daily-wins" class="text-2xl sm:text-4xl font-bold text-white">0</p></div><div class="bg-red-500/10 p-4 rounded-lg"><p class="text-sm text-red-400">Loss</p><p id="daily-loss" class="text-2xl sm:text-4xl font-bold text-white">0</p></div><div class="bg-blue-500/10 p-4 rounded-lg"><p class="text-sm text-blue-400">Resultado</p><p id="daily-result" class="text-xl sm:text-2xl md:text-3xl font-bold text-white min-w-0 break-words">R$0.00</p></div></div><h3 class="text-xl font-bold mb-4">Histórico de Hoje</h3><div id="daily-trades-list" class="space-y-3 max-h-96 overflow-y-auto pr-2"></div></div></div>
+            </section>
+        </div>
+
+        <!-- BOTTOM NAVIGATION -->
+        <nav class="fixed bottom-0 left-0 right-0 h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center z-30">
+            <button data-view="dashboard" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="layout-dashboard"></i><span class="text-xs mt-1">Dashboard</span></button>
+            <button id="nav-report-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="bar-chart-3"></i><span class="text-xs mt-1">Relatório</span></button>
+            <button id="nav-settings-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="settings"></i><span class="text-xs mt-1">Ajustes</span></button>
+        </nav>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, getDocs, query, Timestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe3WZmGmglmXb2GjCL5efKvhczp6bp5us",
+            authDomain: "optishield-17bcd.firebaseapp.com",
+            projectId: "optishield-17bcd",
+            storageBucket: "optishield-17bcd.firebasestorage.app",
+            messagingSenderId: "726740371491",
+            appId: "1:726740371491:web:45d5298e6343e1ee450996",
+            measurementId: "G-8B8EX802CQ"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const body = document.body;
+        let currentDate = new Date();
+        let activeDate = new Date();
+        let showCalendarProfit = true;
+        let dashboardFilter = 'monthly';
+        let userId = null;
+        let userSettings = {};
+        let allTrades = [];
+        let isLoggedIn = false;
+
+        const dataManager = {
+            async getSettings() {
+                if (!userId) return {};
+                const docRef = doc(db, "users", userId);
+                const docSnap = await getDoc(docRef);
+                const defaultSettings = { currency: "BRL", initialBalance: 0, hideBalance: false, monthlyBalances: {}, dailyNotes: {}, dashboardFilter: 'monthly' };
+                return docSnap.exists() ? { ...defaultSettings, ...docSnap.data() } : defaultSettings;
+            },
+            async saveSettings(settings) {
+                if (!userId) return;
+                await setDoc(doc(db, "users", userId), settings, { merge: true });
+            },
+            async fetchAllTrades() {
+                if (!userId) return [];
+                const tradesColRef = collection(db, "users", userId, "trades");
+                const q = query(tradesColRef);
+                const querySnapshot = await getDocs(q);
+                return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a,b) => a.createdAt.seconds - b.createdAt.seconds);
+            },
+            async addTrade(tradeData) {
+                if (!userId) return null;
+                const tradesColRef = collection(db, "users", userId, "trades");
+                const docRef = await addDoc(tradesColRef, { ...tradeData, createdAt: Timestamp.now() });
+                return { ...tradeData, id: docRef.id, createdAt: { seconds: Date.now() / 1000 } };
+            },
+            async updateTradeProfit(tradeId, newProfit, newPayout) {
+                if (!userId) return;
+                const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
+                await updateDoc(tradeDocRef, { profit: newProfit, payout: newPayout });
+            },
+            async deleteTrade(tradeId) {
+                if (!userId) return;
+                const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
+                await deleteDoc(tradeDocRef);
+            }
+        };
+
+        function formatCurrency(value, currency) { const options = { style: 'currency', currency: currency || userSettings.currency }; const locale = (currency || userSettings.currency) === 'BRL' ? 'pt-BR' : 'en-US'; return new Intl.NumberFormat(locale, options).format(value || 0); }
+        function formatCurrencyWithHiding(value, currency) { return userSettings.hideBalance ? "----" : formatCurrency(value, currency); }
+        function updateThemeIcons(theme) { const themeToggle = document.getElementById('theme-toggle-dash'); if (!themeToggle) return; const sunIcon = themeToggle.querySelector('[data-lucide="sun"]'); const moonIcon = themeToggle.querySelector('[data-lucide="moon"]'); if (sunIcon) sunIcon.classList.toggle('hidden', theme === 'dark'); if (moonIcon) moonIcon.classList.toggle('hidden', theme !== 'dark'); }
+
+        function setView(view, options = {}) {
+            if (options.date) activeDate = new Date(options.date);
+            body.setAttribute('data-view', view);
+            document.querySelectorAll('.nav-btn[data-view]').forEach(btn => btn.classList.toggle('text-blue-500', btn.dataset.view === view));
+            if (view === 'dashboard') renderDashboard();
+            if (view === 'trader') renderTraderView();
+        }
+
+        function getDateRange(period, date) {
+            const year = date.getUTCFullYear();
+            const month = date.getUTCMonth();
+            const day = date.getUTCDate();
+            let start, end;
+
+            switch (period) {
+                case 'weekly': {
+                    const dayOfWeek = date.getUTCDay();
+                    const firstDayOfWeek = day - dayOfWeek;
+                    start = new Date(Date.UTC(year, month, firstDayOfWeek));
+                    end = new Date(Date.UTC(year, month, firstDayOfWeek + 6));
+                    break;
+                }
+                case 'bi-weekly': {
+                    if (day <= 15) {
+                        start = new Date(Date.UTC(year, month, 1));
+                        end = new Date(Date.UTC(year, month, 15));
+                    } else {
+                        const lastDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+                        start = new Date(Date.UTC(year, month, 16));
+                        end = new Date(Date.UTC(year, month, lastDay));
+                    }
+                    break;
+                }
+                case 'monthly':
+                default: {
+                    start = new Date(Date.UTC(year, month, 1));
+                    const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+                    end = new Date(Date.UTC(year, month, lastDayOfMonth));
+                    break;
+                }
+            }
+            return { start, end };
+        }
+
+        function renderDashboard() {
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendar-grid');
+            const tooltip = document.getElementById('calendar-tooltip');
+            calendarGrid.innerHTML = '';
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthYearEl = document.getElementById('month-year');
+            monthYearEl.textContent = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^\w/, c => c.toUpperCase());
+            monthYearEl.onclick = () => {
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = `${baseUrl}report.html?year=${year}&month=${month}`;
+            };
+
+            const { start, end } = getDateRange(dashboardFilter, currentDate);
+            
+            ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(day => calendarGrid.appendChild(Object.assign(document.createElement('div'), { className: 'text-center font-bold text-xs text-zinc-400', textContent: day })));
+            
+            const firstDayOffset = start.getUTCDay();
+            for (let i = 0; i < firstDayOffset; i++) {
+                calendarGrid.appendChild(document.createElement('div'));
+            }
+
+            let loopDate = new Date(start);
+            while(loopDate <= end) {
+                const currentDateForButton = new Date(loopDate);
+                const dayEl = document.createElement('button');
+                dayEl.onclick = () => {
+                    setView('trader', { date: currentDateForButton });
+                };
+                
+                const dayOfWeek = loopDate.getUTCDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+                const dateString = loopDate.toISOString().split('T')[0];
+                const dayTrades = allTrades.filter(t => t.date === dateString);
+
+                let profitHTML = '';
+                const elClasses = ['day-cell', 'relative', 'h-16', 'sm:h-24', 'rounded-lg', 'flex', 'flex-col', 'justify-center', 'items-center', 'p-1'];
+
+                if (isWeekend) {
+                    elClasses.push('weekend');
+                }
+
+                if (dayTrades.length > 0) {
+                    const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+                    elClasses.push(profit >= 0 ? 'day-win' : 'day-loss');
+                    
+                    const profitColor = profit >= 0 ? 'text-green-500' : 'text-red-500';
+                    if (showCalendarProfit) { 
+                        profitHTML = `<span class="text-xs sm:text-sm font-bold ${profitColor}"><span class="balance-value">${formatCurrency(profit)}</span><span class="hidden-balance-value">----</span></span>`; 
+                    }
+                }
+
+                dayEl.className = elClasses.join(' ');
+                dayEl.innerHTML = `<span class="absolute top-1.5 right-1.5 text-xs text-zinc-500 dark:text-zinc-400">${loopDate.getUTCDate()}</span><div class="flex items-center justify-center h-full">${profitHTML}</div>`;
+                
+                dayEl.onmouseenter = (e) => {
+                    if (dayTrades.length > 0) {
+                        const wins = dayTrades.filter(t => t.result === 'win').length;
+                        const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+                        tooltip.innerHTML = `<strong>${wins} W</strong> x <strong>${dayTrades.length - wins} L</strong> | <strong>${formatCurrency(profit)}</strong>`;
+                        tooltip.classList.remove('hidden');
+                        tooltip.style.left = `${e.clientX + 15}px`;
+                        tooltip.style.top = `${e.clientY - 40}px`;
+                        tooltip.classList.add('opacity-100', 'translate-y-0');
+                    }
+                };
+                dayEl.onmouseleave = () => {
+                    tooltip.classList.remove('opacity-100', 'translate-y-0');
+                    setTimeout(() => tooltip.classList.add('hidden'), 100);
+                };
+
+                calendarGrid.appendChild(dayEl);
+                loopDate.setUTCDate(loopDate.getUTCDate() + 1);
+            }
+        }
+
+        function renderTraderView() {
+            document.getElementById('form-date').textContent = activeDate.toLocaleDateString('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).replace(/^\w/, c => c.toUpperCase());
+            document.getElementById('value-label').textContent = `Valor da Entrada (${userSettings.currency || 'BRL'})`;
+            const activeDateString = activeDate.toISOString().split('T')[0];
+            const dayTrades = allTrades.filter(t => t.date === activeDateString);
+            const wins = dayTrades.filter(t => t.result === 'win').length;
+            const totalProfit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+            document.getElementById('daily-wins').textContent = wins;
+            document.getElementById('daily-loss').textContent = dayTrades.length - wins;
+            document.getElementById('daily-result').textContent = formatCurrencyWithHiding(totalProfit);
+            
+            const listEl = document.getElementById('daily-trades-list');
+            listEl.innerHTML = dayTrades.length === 0 ? '<p class="text-center text-zinc-500">Nenhuma ordem registrada neste dia.</p>' : '';
+            dayTrades.slice().reverse().forEach(trade => {
+                const tradeEl = document.createElement('div');
+                tradeEl.className = 'flex justify-between items-center p-3 bg-zinc-100 dark:bg-zinc-800/50 rounded-lg';
+                tradeEl.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="font-bold">${trade.result.toUpperCase()}</span> 
+                        <span class="text-sm text-zinc-400">${formatCurrencyWithHiding(trade.value)}</span>
+                        <span class="text-xs text-zinc-500">(${(trade.payout || 0).toFixed(2)}%)</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="profit-value font-semibold cursor-pointer ${trade.result === 'win' ? 'text-green-400' : 'text-red-400'}" data-trade-id="${trade.id}">${trade.profit > 0 ? '+' : ''}${formatCurrencyWithHiding(trade.profit)}</span>
+                        <button class="delete-trade-btn p-1 text-zinc-500 hover:text-red-500 transition-colors" data-trade-id="${trade.id}" aria-label="Excluir ordem">
+                            <i data-lucide="trash-2" class="h-4 w-4"></i>
+                        </button>
+                    </div>`;
+                listEl.appendChild(tradeEl);
+            });
+            lucide.createIcons();
+            calculateExpectedProfit();
+        }
+        
+        function calculateExpectedProfit() {
+            const value = parseFloat(document.getElementById('value').value) || 0;
+            const payout = parseFloat(document.getElementById('payout').value) || 0;
+            const profit = (value * payout) / 100;
+            document.getElementById('expected-profit').textContent = formatCurrency(profit);
+        }
+
+        function showLoginPrompt() {
+            document.getElementById('login-required-modal').classList.add('visible');
+        }
+
+        function initializeEventListeners() {
+            document.querySelectorAll('.nav-btn[data-view]').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
+            document.getElementById('fab-add-trade').addEventListener('click', () => { 
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                activeDate = new Date(); 
+                setView('trader'); 
+            });
+            document.querySelectorAll('.nav-back').forEach(btn => btn.addEventListener('click', () => setView('dashboard')));
+            document.getElementById('theme-toggle-dash').addEventListener('click', () => { 
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+                document.documentElement.setAttribute('data-theme', newTheme); 
+                localStorage.setItem('theme', newTheme); 
+                updateThemeIcons(newTheme); 
+            });
+            
+            document.getElementById('prev-period').addEventListener('click', () => { 
+                if(dashboardFilter === 'monthly') currentDate.setUTCMonth(currentDate.getUTCMonth() - 1);
+                else if(dashboardFilter === 'weekly') currentDate.setUTCDate(currentDate.getUTCDate() - 7);
+                else if(dashboardFilter === 'bi-weekly') currentDate.setUTCDate(currentDate.getUTCDate() - 15);
+                renderDashboard(); 
+            });
+            document.getElementById('next-period').addEventListener('click', () => { 
+                if(dashboardFilter === 'monthly') currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
+                else if(dashboardFilter === 'weekly') currentDate.setUTCDate(currentDate.getUTCDate() + 7);
+                else if(dashboardFilter === 'bi-weekly') currentDate.setUTCDate(currentDate.getUTCDate() + 15);
+                renderDashboard(); 
+            });
+
+            document.getElementById('toggle-calendar-profit').addEventListener('click', (e) => { showCalendarProfit = !showCalendarProfit; const button = e.currentTarget; button.innerHTML = `<i data-lucide="${showCalendarProfit ? 'eye' : 'eye-off'}"></i>`; lucide.createIcons(); renderCalendar(); });
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    dashboardFilter = e.currentTarget.dataset.filter;
+                    if(isLoggedIn) {
+                        userSettings.dashboardFilter = dashboardFilter;
+                        await dataManager.saveSettings(userSettings);
+                    }
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    renderDashboard();
+                });
+            });
+
+            document.getElementById('payout').addEventListener('input', calculateExpectedProfit);
+            document.getElementById('value').addEventListener('input', calculateExpectedProfit);
+            document.getElementById('trade-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                const result = e.submitter.dataset.result;
+                const value = parseFloat(document.getElementById('value').value);
+                const payout = parseFloat(document.getElementById('payout').value);
+                if (!value || !payout) { alert('Preencha o valor e o payout.'); return; }
+                const profit = result === 'win' ? (value * payout) / 100 : -value;
+                const newTradeData = { 
+                    date: activeDate.toISOString().split('T')[0], 
+                    value, payout, result, profit,
+                };
+                
+                const newTrade = await dataManager.addTrade(newTradeData);
+                if (newTrade) allTrades.push(newTrade);
+
+                document.getElementById('value').focus();
+                renderTraderView();
+            });
+            
+            document.getElementById('daily-trades-list').addEventListener('click', async (e) => {
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                
+                const profitSpan = e.target.closest('.profit-value');
+                if (profitSpan) {
+                    const tradeId = profitSpan.dataset.tradeId;
+                    const input = document.createElement('input');
+                    input.type = 'number'; input.step = '0.01';
+                    input.className = 'bg-transparent w-24 text-right font-semibold outline-none ring-2 ring-blue-500 rounded-md';
+                    const originalTrade = allTrades.find(t => t.id === tradeId);
+                    input.value = originalTrade.profit.toFixed(2);
+                    
+                    profitSpan.replaceWith(input);
+                    input.focus(); input.select();
+
+                    const saveEdit = async () => {
+                        const newProfit = parseFloat(input.value);
+                        if (!isNaN(newProfit)) {
+                            const tradeToEdit = allTrades.find(t => t.id === tradeId);
+                            let newPayout = tradeToEdit.payout;
+                            if (tradeToEdit.result === 'win' && tradeToEdit.value > 0) {
+                                newPayout = (newProfit / tradeToEdit.value) * 100;
+                            }
+                            await dataManager.updateTradeProfit(tradeId, newProfit, newPayout);
+                            
+                            tradeToEdit.profit = newProfit;
+                            tradeToEdit.payout = newPayout;
+                        }
+                        renderTraderView();
+                    };
+
+                    input.addEventListener('blur', saveEdit);
+                    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') input.blur(); if (e.key === 'Escape') renderTraderView(); });
+                }
+
+                const deleteBtn = e.target.closest('.delete-trade-btn');
+                if (deleteBtn) {
+                    const tradeId = deleteBtn.dataset.tradeId;
+                    await dataManager.deleteTrade(tradeId);
+                    allTrades = allTrades.filter(t => t.id !== tradeId);
+                    renderTraderView();
+                }
+            });
+
+            document.getElementById('open-journal-modal').addEventListener('click', () => {
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                const modal = document.getElementById('journal-modal');
+                const dateString = activeDate.toISOString().split('T')[0];
+                document.getElementById('journal-date').textContent = activeDate.toLocaleDateString('pt-BR', { dateStyle: 'full', timeZone: 'UTC' });
+                document.getElementById('journal-textarea').value = userSettings.dailyNotes[dateString] || '';
+                modal.classList.remove('hidden'); modal.classList.add('flex');
+                setTimeout(() => document.getElementById('journal-modal-content').classList.remove('scale-95'), 10);
+            });
+            document.getElementById('close-journal-modal').addEventListener('click', () => {
+                const modal = document.getElementById('journal-modal');
+                document.getElementById('journal-modal-content').classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 200);
+            });
+            document.getElementById('save-journal-btn').addEventListener('click', async () => {
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                const dateString = activeDate.toISOString().split('T')[0];
+                userSettings.dailyNotes[dateString] = document.getElementById('journal-textarea').value;
+                await dataManager.saveSettings({ dailyNotes: userSettings.dailyNotes });
+                document.getElementById('close-journal-modal').click();
+            });
+
+            // Modal listeners
+            document.getElementById('go-to-login-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'login.html';
+            });
+            document.getElementById('close-login-modal-btn').addEventListener('click', () => {
+                document.getElementById('login-required-modal').classList.remove('visible');
+            });
+            document.getElementById('nav-report-btn').addEventListener('click', () => {
+                if (!isLoggedIn) { showLoginPrompt(); return; }
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'report.html';
+            });
+            document.getElementById('nav-settings-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'settings.html';
+            });
+        }
+
+        function updateWelcomeHeader(user) {
+            const welcomeEl = document.getElementById('user-welcome');
+            const greetingEl = document.getElementById('user-greeting');
+            const avatarEl = document.getElementById('user-avatar');
+            const loginPrompt = document.getElementById('login-prompt');
+            
+            welcomeEl.classList.remove('hidden');
+
+            if (user) {
+                isLoggedIn = true;
+                const hour = new Date().getHours();
+                let greeting = "Olá";
+                if (hour < 12) greeting = "Bom dia";
+                else if (hour < 18) greeting = "Boa tarde";
+                else greeting = "Boa noite";
+                
+                greetingEl.textContent = `${greeting}, ${user.displayName || 'trader'}!`;
+                avatarEl.src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || 'T'}&background=09090b&color=f4f4f5`;
+                loginPrompt.style.display = 'none';
+            } else {
+                isLoggedIn = false;
+                greetingEl.textContent = "Bem-vindo(a), visitante!";
+                avatarEl.src = `https://ui-avatars.com/api/?name=?&background=09090b&color=f4f4f5`;
+                loginPrompt.style.display = 'block';
+            }
+        }
+
+        async function loadInitialData() {
+            if (isLoggedIn) {
+                userSettings = await dataManager.getSettings();
+                allTrades = await dataManager.fetchAllTrades();
+            } else {
+                userSettings = { currency: "BRL", initialBalance: 0, hideBalance: false, monthlyBalances: {}, dailyNotes: {}, dashboardFilter: 'monthly' };
+                allTrades = [];
+            }
+        }
+        
+        function main() {
+            onAuthStateChanged(auth, async (user) => {
+                userId = user ? user.uid : null;
+                isLoggedIn = !!user; 
+                
+                await loadInitialData();
+                updateWelcomeHeader(user);
+                
+                dashboardFilter = userSettings.dashboardFilter || 'monthly';
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                const activeFilter = document.querySelector(`.filter-btn[data-filter="${dashboardFilter}"]`);
+                if (activeFilter) activeFilter.classList.add('active');
+
+                document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+                body.setAttribute('data-hide-balance', userSettings.hideBalance);
+                updateThemeIcons(document.documentElement.getAttribute('data-theme'));
+                
+                if (!window.listenersInitialized) {
+                    initializeEventListeners();
+                    window.listenersInitialized = true;
+                }
+
+                setView('dashboard');
+                lucide.createIcons();
+
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app-content').classList.remove('hidden');
+            });
+        }
+        
+        main();
+    </script>
+</body>
+</html>

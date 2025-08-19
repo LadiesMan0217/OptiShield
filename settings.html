@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajustes • OptiShield</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+        }
+        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #e4e4e7; --input-border: #d4d4d8; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); }
+        .page { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
+        .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay.visible { display: flex; opacity: 1; }
+        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--card-border); width: min(94vw, 400px); transform: scale(0.95); transition: transform 0.3s ease; text-align: center; }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-top: 0; font-size: 22px; font-weight: 700; }
+        .modal-content p { color: var(--fg-secondary); font-size: 14px; margin-bottom: 24px; }
+        .modal-content .form-group { text-align: left; margin-bottom: 1rem; }
+        .modal-content input { width: 100%; margin-top: 4px; padding: 12px; border-radius: 10px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--fg); outline: none; }
+        .btn { width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--accent); color: #ffffff; font-weight: 700; transition: transform .1s ease, background-color .2s ease; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover:not(:disabled) { background-color: #f87171; }
+        .btn-danger:disabled { background-color: var(--danger); opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: var(--input-bg); color: var(--fg); }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <div id="app-content" class="hidden">
+        <section id="settings-view" class="page max-w-4xl mx-auto">
+            <header class="flex items-center mb-8">
+                <a href="index.html" class="nav-back p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 mr-2">
+                    <i data-lucide="arrow-left"></i>
+                </a>
+                <h1 class="text-3xl font-bold">Ajustes da Conta</h1>
+            </header>
+            
+            <div class="space-y-8">
+                <!-- Personal Data Card -->
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-bold mb-6">Dados Pessoais</h2>
+                    <div class="space-y-6">
+                        <div>
+                            <label for="profile-name" class="block text-sm font-medium text-zinc-400">Nome de Exibição</label>
+                            <input type="text" id="profile-name" class="w-full mt-1 p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border-2 border-transparent focus:border-blue-500 outline-none transition">
+                        </div>
+                         <button id="save-profile-btn" class="w-full sm:w-auto py-2 px-6 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">Salvar Nome</button>
+                        <div class="border-t border-[var(--card-border)] my-6"></div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-400">E-mail</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <p id="display-email" class="text-lg font-semibold"></p>
+                                <button id="toggle-email-visibility" class="p-1 text-zinc-400 hover:text-white">
+                                    <i data-lucide="eye" class="h-5 w-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-zinc-400">ID de Usuário</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <p id="display-uid" class="text-sm font-mono text-zinc-500 truncate"></p>
+                                <button id="copy-uid-btn" class="p-1 text-zinc-400 hover:text-white relative">
+                                    <i data-lucide="copy" class="h-5 w-5"></i>
+                                    <span id="copy-feedback" class="absolute left-full ml-2 text-xs bg-zinc-700 text-white px-2 py-1 rounded-md opacity-0 transition-opacity pointer-events-none">Copiado!</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings Card -->
+                <div class="card p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-xl font-bold mb-6">Segurança da Conta</h2>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Alterar Senha</h3>
+                                <p class="text-sm text-zinc-400">Recomendamos usar uma senha forte que você não usa em outro lugar.</p>
+                            </div>
+                            <button id="change-password-btn" class="py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition text-sm">Alterar</button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Alterar E-mail</h3>
+                                <p class="text-sm text-zinc-400">Altere o e-mail associado à sua conta.</p>
+                            </div>
+                            <button id="change-email-btn" class="py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition text-sm">Alterar</button>
+                        </div>
+                         <div class="flex justify-between items-center opacity-50">
+                            <div>
+                                <h3 class="font-semibold">Autenticação de Dois Fatores</h3>
+                                <p class="text-sm text-zinc-400">Adicione uma camada extra de segurança à sua conta.</p>
+                            </div>
+                            <button class="py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold rounded-lg cursor-not-allowed text-sm">Em Breve</button>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mt-6">Histórico de Acesso</h3>
+                            <p class="text-sm text-zinc-400">Último login realizado em: <span id="last-login-time" class="font-medium"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Session & Deletion Card -->
+                <div class="card p-6 rounded-2xl shadow-lg border-red-500/20">
+                    <h2 class="text-xl font-bold mb-6 text-red-500">Sessão e Encerramento</h2>
+                    <div class="space-y-4">
+                       <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold">Sair da Conta</h3>
+                                <p class="text-sm text-zinc-400">Encerre sua sessão atual em todos os dispositivos.</p>
+                            </div>
+                            <button id="logout-btn" class="py-2 px-4 bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-semibold rounded-lg hover:bg-zinc-300 dark:hover:bg-zinc-700 transition text-sm">Sair</button>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-semibold text-red-500">Apagar Conta Permanentemente</h3>
+                                <p class="text-sm text-zinc-400">Esta ação é irreversível e todos os seus dados serão perdidos.</p>
+                            </div>
+                            <button id="delete-account-btn" class="py-2 px-4 bg-red-500/10 text-red-500 font-semibold rounded-lg hover:bg-red-500/20 transition text-sm">Apagar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modals -->
+    <div id="change-password-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Alterar Senha</h2>
+            <form id="change-password-form">
+                <div class="form-group">
+                    <label for="current-password">Senha Atual</label>
+                    <input type="password" id="current-password" required autocomplete="current-password">
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nova Senha</label>
+                    <input type="password" id="new-password" required autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label for="confirm-new-password">Confirmar Nova Senha</label>
+                    <input type="password" id="confirm-new-password" required autocomplete="new-password">
+                </div>
+                <p id="change-password-feedback" class="text-sm text-center my-4 min-h-[20px]"></p>
+                <button type="submit" class="btn">Salvar Nova Senha</button>
+                <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="change-email-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Alterar E-mail</h2>
+            <form id="change-email-form">
+                <div class="form-group">
+                    <label for="new-email">Novo E-mail</label>
+                    <input type="email" id="new-email" required>
+                </div>
+                <div class="form-group">
+                    <label for="email-password-confirm">Senha Atual (para confirmação)</label>
+                    <input type="password" id="email-password-confirm" required autocomplete="current-password">
+                </div>
+                <p id="change-email-feedback" class="text-sm text-center my-4 min-h-[20px]"></p>
+                <button type="submit" class="btn">Salvar Novo E-mail</button>
+                <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="delete-account-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Apagar Conta</h2>
+            <p class="text-yellow-400">Atenção! Esta ação é irreversível. Todos os seus dados, incluindo histórico de operações e configurações, serão permanentemente apagados.</p>
+            <form id="delete-account-form">
+                <div class="form-group">
+                    <label for="delete-confirmation">Para confirmar, digite "APAGAR" abaixo:</label>
+                    <input type="text" id="delete-confirmation" autocomplete="off">
+                </div>
+                <p id="delete-account-feedback" class="text-sm text-center my-4 min-h-[20px]"></p>
+                <button type="submit" id="confirm-delete-btn" class="btn btn-danger" disabled>Confirmar e Apagar Conta</button>
+                <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut, updateProfile, EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser, updateEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe3WZmGmglmXb2GjCL5efKvhczp6bp5us",
+            authDomain: "optishield-17bcd.firebaseapp.com",
+            projectId: "optishield-17bcd",
+            storageBucket: "optishield-17bcd.firebasestorage.app",
+            messagingSenderId: "726740371491",
+            appId: "1:726740371491:web:45d5298e6343e1ee450996",
+            measurementId: "G-8B8EX802CQ"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        function initializeEventListeners() {
+            document.getElementById('save-profile-btn').addEventListener('click', async () => {
+                const newName = document.getElementById('profile-name').value;
+                const user = auth.currentUser;
+                if(user) {
+                    try {
+                        await updateProfile(user, { displayName: newName });
+                        alert("Perfil atualizado com sucesso!");
+                        location.reload();
+                    } catch (error) {
+                        alert("Ocorreu um erro ao atualizar o perfil.");
+                        console.error("Profile update error:", error);
+                    }
+                }
+            });
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                signOut(auth);
+            });
+
+            // Security Modals
+            document.getElementById('change-password-btn').addEventListener('click', () => document.getElementById('change-password-modal').classList.add('visible'));
+            document.getElementById('change-email-btn').addEventListener('click', () => document.getElementById('change-email-modal').classList.add('visible'));
+            document.getElementById('delete-account-btn').addEventListener('click', () => document.getElementById('delete-account-modal').classList.add('visible'));
+            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', (e) => e.target.closest('.modal-overlay').classList.remove('visible')));
+
+            document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const feedbackEl = document.getElementById('change-password-feedback');
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+                feedbackEl.textContent = '';
+
+                if (newPassword !== confirmNewPassword) {
+                    feedbackEl.textContent = 'As novas senhas não coincidem.';
+                    feedbackEl.style.color = 'var(--danger)';
+                    return;
+                }
+                if (newPassword.length < 6) {
+                    feedbackEl.textContent = 'A nova senha deve ter pelo menos 6 caracteres.';
+                    feedbackEl.style.color = 'var(--danger)';
+                    return;
+                }
+
+                const user = auth.currentUser;
+                const credential = EmailAuthProvider.credential(user.email, currentPassword);
+
+                try {
+                    await reauthenticateWithCredential(user, credential);
+                    await updatePassword(user, newPassword);
+                    feedbackEl.textContent = 'Senha alterada com sucesso!';
+                    feedbackEl.style.color = 'var(--success)';
+                    setTimeout(() => {
+                        document.getElementById('change-password-modal').classList.remove('visible');
+                        feedbackEl.textContent = '';
+                        e.target.reset();
+                    }, 2000);
+                } catch (error) {
+                    feedbackEl.textContent = 'A senha atual está incorreta.';
+                    feedbackEl.style.color = 'var(--danger)';
+                }
+            });
+            
+            document.getElementById('change-email-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const feedbackEl = document.getElementById('change-email-feedback');
+                const newEmail = document.getElementById('new-email').value;
+                const password = document.getElementById('email-password-confirm').value;
+                const user = auth.currentUser;
+                
+                feedbackEl.textContent = '';
+
+                const credential = EmailAuthProvider.credential(user.email, password);
+
+                try {
+                    await reauthenticateWithCredential(user, credential);
+                    await updateEmail(user, newEmail);
+                    feedbackEl.textContent = 'E-mail alterado com sucesso!';
+                    feedbackEl.style.color = 'var(--success)';
+                    setTimeout(() => {
+                        document.getElementById('change-email-modal').classList.remove('visible');
+                        feedbackEl.textContent = '';
+                        e.target.reset();
+                        location.reload(); // Reload to show new email
+                    }, 2000);
+                } catch (error) {
+                    feedbackEl.textContent = 'Senha incorreta ou e-mail inválido.';
+                    feedbackEl.style.color = 'var(--danger)';
+                }
+            });
+
+            document.getElementById('delete-confirmation').addEventListener('input', (e) => {
+                document.getElementById('confirm-delete-btn').disabled = e.target.value !== 'APAGAR';
+            });
+
+            document.getElementById('delete-account-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const feedbackEl = document.getElementById('delete-account-feedback');
+                const user = auth.currentUser;
+                if (!user) return;
+
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    await deleteDoc(userDocRef);
+                    await deleteUser(user);
+                    alert('Conta apagada com sucesso. Sentiremos sua falta!');
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    if (error.code === 'auth/requires-recent-login') {
+                        feedbackEl.textContent = 'Por segurança, faça login novamente antes de apagar a conta.';
+                        feedbackEl.style.color = 'var(--warning)';
+                        setTimeout(() => signOut(auth), 3000);
+                    } else {
+                        feedbackEl.textContent = 'Ocorreu um erro ao apagar a conta.';
+                        feedbackEl.style.color = 'var(--danger)';
+                        console.error("Delete account error:", error);
+                    }
+                }
+            });
+
+            document.getElementById('toggle-email-visibility').addEventListener('click', (e) => {
+                const emailEl = document.getElementById('display-email');
+                const isMasked = emailEl.dataset.masked === 'true';
+                const user = auth.currentUser;
+                const icon = e.currentTarget.querySelector('i');
+
+                if (isMasked) {
+                    emailEl.textContent = user.email;
+                    emailEl.dataset.masked = 'false';
+                    icon.setAttribute('data-lucide', 'eye-off');
+                } else {
+                    emailEl.textContent = '••••••••@••••.com';
+                    emailEl.dataset.masked = 'true';
+                    icon.setAttribute('data-lucide', 'eye');
+                }
+                lucide.createIcons();
+            });
+
+            document.getElementById('copy-uid-btn').addEventListener('click', (e) => {
+                const uid = auth.currentUser.uid;
+                const feedback = document.getElementById('copy-feedback');
+                navigator.clipboard.writeText(uid).then(() => {
+                    feedback.style.opacity = '1';
+                    setTimeout(() => {
+                       feedback.style.opacity = '0';
+                    }, 2000);
+                });
+            });
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is signed in, show the content
+                const [firstName, ...lastNameParts] = (user.displayName || 'Usuário Anônimo').split(' ');
+                document.getElementById('display-name').textContent = firstName;
+                document.getElementById('display-surname').textContent = lastNameParts.join(' ');
+                document.getElementById('profile-name').value = user.displayName || '';
+                
+                const emailEl = document.getElementById('display-email');
+                emailEl.textContent = '••••••••@••••.com';
+                emailEl.dataset.masked = 'true';
+
+                document.getElementById('display-uid').textContent = user.uid;
+                
+                const lastLogin = new Date(user.metadata.lastSignInTime).toLocaleString('pt-BR');
+                document.getElementById('last-login-time').textContent = lastLogin;
+                
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('app-content').classList.remove('hidden');
+                lucide.createIcons();
+                initializeEventListeners();
+            } else {
+                // User is signed out, redirect to login page
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'login.html';
+            }
+        });
+    </script>
+</body>
+</html>
