@@ -5,47 +5,89 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OptiShield • Dashboard</title>
     
-    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    
+    <!-- Meta tags para melhor SEO e experiência mobile -->
+    <meta name="description" content="OptiShield - Dashboard para análise de risco para traders de opções binárias">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
         :root {
-            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --accent-hover: #2563eb; --danger: #ef4444; --danger-hover: #dc2626; --warning: #f59e0b; --success: #16a34a; --success-hover: #15803d; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
         }
-        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #e4e4e7; --input-border: #d4d4d8; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; padding-bottom: 80px; }
-        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); }
-        .day-cell { background-color: var(--card-bg); border: 1px solid var(--card-border); transition: transform 0.2s, background-color 0.2s; }
-        .day-cell:hover:not(.weekend) { transform: scale(1.05); z-index: 10; }
+        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --accent-hover: #1d4ed8; --danger-hover: #b91c1c; --success-hover: #166534; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #f9fafb; --input-border: #d1d5db; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color var(--transition-normal), color var(--transition-normal); padding-bottom: 80px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition-fast), transform var(--transition-fast); }
+        .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .day-cell { background-color: var(--card-bg); border: 1px solid var(--card-border); transition: all var(--transition-fast); position: relative; overflow: hidden; }
+        .day-cell::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transition: left var(--transition-normal); }
+        .day-cell:hover:not(.weekend) { transform: translateY(-2px); z-index: 10; box-shadow: var(--shadow-lg); }
+        .day-cell:hover:not(.weekend)::before { left: 100%; }
+        .day-cell:active:not(.weekend) { transform: translateY(0); }
         .day-win { background-color: rgba(22, 163, 74, 0.1); border-color: var(--success); }
         .day-loss { background-color: rgba(239, 68, 68, 0.1); border-color: var(--danger); }
         .weekend { background-color: rgba(113, 113, 122, 0.1); }
-        .page { display: none; animation: fadeIn 0.5s; }
+        .page { display: none; animation: fadeIn var(--transition-normal); }
         body[data-view="dashboard"] #dashboard-view, body[data-view="trader"] #trader-view { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .hidden-balance-value { display: none; }
         body[data-hide-balance="true"] .balance-value { display: none; }
         body[data-hide-balance="true"] .hidden-balance-value { display: inline; }
-        .filter-btn.active { background-color: var(--card-bg); color: var(--fg); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
-        #calendar-tooltip { transition: opacity 0.2s, transform 0.2s; }
+        .filter-btn { transition: all var(--transition-fast); border-radius: 8px; font-weight: 600; }
+        .filter-btn:hover { background-color: var(--input-bg); transform: translateY(-1px); }
+        .filter-btn.active { background-color: var(--accent); color: white; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .filter-btn.active:hover { background-color: var(--accent-hover); }
+        #calendar-tooltip { transition: opacity var(--transition-fast), transform var(--transition-fast); }
         
         #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
         .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* Enhanced button styles */
+        button, .nav-btn { transition: all var(--transition-fast); }
+        button:hover, .nav-btn:hover { transform: translateY(-1px); }
+        button:active, .nav-btn:active { transform: translateY(0); }
+        
+        /* Input enhancements */
+        input, textarea { transition: all var(--transition-fast); }
+        input:focus, textarea:focus { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        
+        /* Responsive styles */
+        @media (max-width: 640px) {
+            .day-cell { height: 3.5rem !important; min-height: 3.5rem; }
+            #calendar-grid { gap: 0.5rem; }
+            .filter-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+            .touch-optimized { min-height: 4rem; }
+            #calendar-header { flex-direction: column; align-items: flex-start; }
+            .card:hover { transform: none; } /* Disable hover effects on mobile */
+            .day-cell:hover:not(.weekend) { transform: none; }
+        }
+
         /* Modal Styles */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; opacity: 0; transition: opacity var(--transition-normal) ease; }
         .modal-overlay.visible { display: flex; opacity: 1; }
-        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--card-border); width: min(94vw, 400px); transform: scale(0.95); transition: transform 0.3s ease; text-align: center; }
+        .modal-content { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--card-border); width: min(94vw, 400px); transform: scale(0.95); transition: transform var(--transition-normal) ease; text-align: center; }
         .modal-overlay.visible .modal-content { transform: scale(1); }
         .modal-content h2 { margin-top: 0; font-size: 22px; font-weight: 700; }
         .modal-content p { color: var(--fg-secondary); font-size: 14px; margin-bottom: 24px; }
-        .btn { width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--accent); color: #ffffff; font-weight: 700; transition: transform .1s ease, background-color .2s ease; }
+        .btn { width: 100%; margin-top: 8px; padding: 12px 14px; border-radius: 12px; border: 0; cursor: pointer; background: var(--accent); color: #ffffff; font-weight: 700; transition: all var(--transition-fast) ease; box-shadow: var(--shadow-sm); }
+        .btn:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn:active { transform: translateY(0); }
         .btn-secondary { background: var(--input-bg); color: var(--fg); }
+        .btn-secondary:hover { background: var(--input-border); }
     </style>
 </head>
 <body data-view="dashboard" class="p-4 sm:p-6">
@@ -91,12 +133,42 @@
                         </h1>
                     </div>
                     <div class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                        <button id="toggle-calendar-profit" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="eye"></i></button>
-                        <button id="theme-toggle-dash" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="sun" class="hidden"></i><i data-lucide="moon"></i></button>
+                        <button id="toggle-calendar-profit" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800" aria-label="Alternar visualização de lucro"><i data-lucide="eye"></i></button>
+                        <button id="theme-toggle-dash" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800" aria-label="Alternar tema"><i data-lucide="sun" class="hidden"></i><i data-lucide="moon"></i></button>
                     </div>
                 </header>
                 
-                <div id="calendar-header" class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4"><div class="flex items-center"><button id="prev-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-left"></i></button><h2 id="month-year" class="text-xl font-bold cursor-pointer hover:text-blue-500 transition-colors text-center w-48"></h2><button id="next-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-right"></i></button></div><div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button data-filter="weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Semanal</button><button data-filter="bi-weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Quinzenal</button><button data-filter="monthly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold active">Mensal</button></div></div>
+                <div id="calendar-header" class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <div class="flex items-center">
+                        <button id="prev-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800" aria-label="Período anterior"><i data-lucide="chevron-left"></i></button>
+                        <h2 id="month-year" class="text-xl font-bold cursor-pointer hover:text-blue-500 transition-colors text-center w-48"></h2>
+                        <button id="next-period" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800" aria-label="Próximo período"><i data-lucide="chevron-right"></i></button>
+                    </div>
+                    <div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg">
+                        <button data-filter="weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Semanal</button>
+                        <button data-filter="bi-weekly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold">Quinzenal</button>
+                        <button data-filter="monthly" class="filter-btn px-3 py-1 text-sm rounded-md font-semibold active">Mensal</button>
+                    </div>
+                </div>
+                
+                <!-- Period Summary Section -->
+                <div id="period-summary" class="mb-6 p-4 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl hidden">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-green-500/10 p-3 rounded-lg">
+                            <p class="text-xs text-green-400">Taxa de Acerto</p>
+                            <p id="period-winrate" class="text-xl font-bold text-white">0%</p>
+                        </div>
+                        <div class="bg-blue-500/10 p-3 rounded-lg">
+                            <p class="text-xs text-blue-400">Resultado</p>
+                            <p id="period-result" class="text-xl font-bold text-white">R$0.00</p>
+                        </div>
+                        <div class="bg-amber-500/10 p-3 rounded-lg">
+                            <p class="text-xs text-amber-400">Risco Médio</p>
+                            <p id="period-risk" class="text-xl font-bold text-white">0%</p>
+                        </div>
+                    </div>
+                </div>
+                
                 <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
                 <div id="calendar-tooltip" class="fixed hidden bg-zinc-900 text-white text-xs rounded-lg py-1 px-3 z-50 opacity-0 -translate-y-2 pointer-events-none"></div>
                 <button id="fab-add-trade" class="fixed bottom-24 right-6 sm:right-8 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110"><i data-lucide="plus" class="h-8 w-8"></i></button>
@@ -151,40 +223,138 @@
         let allTrades = [];
         let isLoggedIn = false;
 
+        // Enhanced data management with error handling and caching
         const dataManager = {
+            cache: new Map(),
+            
             async getSettings() {
-                if (!userId) return {};
-                const docRef = doc(db, "users", userId);
-                const docSnap = await getDoc(docRef);
-                const defaultSettings = { currency: "BRL", initialBalance: 0, hideBalance: false, monthlyBalances: {}, dailyNotes: {}, dashboardFilter: 'monthly' };
-                return docSnap.exists() ? { ...defaultSettings, ...docSnap.data() } : defaultSettings;
+                if (!userId) return this.getDefaultSettings();
+                
+                try {
+                    const cacheKey = `settings_${userId}`;
+                    if (this.cache.has(cacheKey)) {
+                        return this.cache.get(cacheKey);
+                    }
+                    
+                    const docRef = doc(db, "users", userId);
+                    const docSnap = await getDoc(docRef);
+                    const defaultSettings = this.getDefaultSettings();
+                    const settings = docSnap.exists() ? { ...defaultSettings, ...docSnap.data() } : defaultSettings;
+                    
+                    this.cache.set(cacheKey, settings);
+                    return settings;
+                } catch (error) {
+                    console.error('Erro ao carregar configurações:', error);
+                    return this.getDefaultSettings();
+                }
             },
+            
+            getDefaultSettings() {
+                return { currency: "BRL", initialBalance: 0, hideBalance: false, monthlyBalances: {}, dailyNotes: {}, dashboardFilter: 'monthly' };
+            },
+            
             async saveSettings(settings) {
                 if (!userId) return;
-                await setDoc(doc(db, "users", userId), settings, { merge: true });
+                
+                try {
+                    await setDoc(doc(db, "users", userId), settings, { merge: true });
+                    this.cache.set(`settings_${userId}`, settings);
+                } catch (error) {
+                    console.error('Erro ao salvar configurações:', error);
+                    throw error;
+                }
             },
+            
             async fetchAllTrades() {
                 if (!userId) return [];
-                const tradesColRef = collection(db, "users", userId, "trades");
-                const q = query(tradesColRef);
-                const querySnapshot = await getDocs(q);
-                return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a,b) => a.createdAt.seconds - b.createdAt.seconds);
+                
+                try {
+                    const cacheKey = `trades_${userId}`;
+                    if (this.cache.has(cacheKey)) {
+                        return this.cache.get(cacheKey);
+                    }
+                    
+                    const tradesColRef = collection(db, "users", userId, "trades");
+                    const q = query(tradesColRef);
+                    const querySnapshot = await getDocs(q);
+                    const trades = querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a,b) => a.createdAt.seconds - b.createdAt.seconds);
+                    
+                    this.cache.set(cacheKey, trades);
+                    return trades;
+                } catch (error) {
+                    console.error('Erro ao carregar trades:', error);
+                    return [];
+                }
             },
+            
             async addTrade(tradeData) {
                 if (!userId) return null;
-                const tradesColRef = collection(db, "users", userId, "trades");
-                const docRef = await addDoc(tradesColRef, { ...tradeData, createdAt: Timestamp.now() });
-                return { ...tradeData, id: docRef.id, createdAt: { seconds: Date.now() / 1000 } };
+                
+                try {
+                    const tradesColRef = collection(db, "users", userId, "trades");
+                    const docRef = await addDoc(tradesColRef, { ...tradeData, createdAt: Timestamp.now() });
+                    const newTrade = { ...tradeData, id: docRef.id, createdAt: { seconds: Date.now() / 1000 } };
+                    
+                    // Update cache
+                    const cacheKey = `trades_${userId}`;
+                    if (this.cache.has(cacheKey)) {
+                        const trades = this.cache.get(cacheKey);
+                        trades.push(newTrade);
+                        this.cache.set(cacheKey, trades);
+                    }
+                    
+                    return newTrade;
+                } catch (error) {
+                    console.error('Erro ao adicionar trade:', error);
+                    throw error;
+                }
             },
+            
             async updateTradeProfit(tradeId, newProfit, newPayout) {
                 if (!userId) return;
-                const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
-                await updateDoc(tradeDocRef, { profit: newProfit, payout: newPayout });
+                
+                try {
+                    const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
+                    await updateDoc(tradeDocRef, { profit: newProfit, payout: newPayout });
+                    
+                    // Update cache
+                    const cacheKey = `trades_${userId}`;
+                    if (this.cache.has(cacheKey)) {
+                        const trades = this.cache.get(cacheKey);
+                        const tradeIndex = trades.findIndex(t => t.id === tradeId);
+                        if (tradeIndex !== -1) {
+                            trades[tradeIndex].profit = newProfit;
+                            trades[tradeIndex].payout = newPayout;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Erro ao atualizar trade:', error);
+                    throw error;
+                }
             },
+            
             async deleteTrade(tradeId) {
                 if (!userId) return;
-                const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
-                await deleteDoc(tradeDocRef);
+                
+                try {
+                    const tradeDocRef = doc(db, "users", userId, "trades", tradeId);
+                    await deleteDoc(tradeDocRef);
+                    
+                    // Update cache
+                    const cacheKey = `trades_${userId}`;
+                    if (this.cache.has(cacheKey)) {
+                        const trades = this.cache.get(cacheKey);
+                        const filteredTrades = trades.filter(t => t.id !== tradeId);
+                        this.cache.set(cacheKey, filteredTrades);
+                    }
+                } catch (error) {
+                    console.error('Erro ao deletar trade:', error);
+                    throw error;
+                }
+            },
+            
+            clearCache() {
+                this.cache.clear();
             }
         };
 
@@ -233,89 +403,335 @@
                     break;
                 }
             }
+            // Normalizar as horas para evitar problemas de comparação
+            start.setUTCHours(0, 0, 0, 0);
+            end.setUTCHours(23, 59, 59, 999);
             return { start, end };
         }
 
         function renderDashboard() {
             renderCalendar();
+            
+            // Set active filter button
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === dashboardFilter);
+            });
+        }
+        
+        // Função para atualizar o resumo do período
+        function updatePeriodSummary(start, end) {
+            const summaryEl = document.getElementById('period-summary');
+            if (!summaryEl) return;
+            
+            // Calcular estatísticas do período
+            let totalWins = 0;
+            let totalLosses = 0;
+            let totalProfit = 0;
+            let totalRisk = 0;
+            let totalValue = 0;
+            let totalPayout = 0;
+            
+            // Arrays para análise avançada
+            let profits = [];
+            let runningBalance = 0;
+            let peak = 0;
+            let maxDrawdown = 0;
+            
+            let loopDate = new Date(start);
+            while (loopDate <= end) {
+                const dateString = loopDate.toISOString().split('T')[0];
+                const dayTrades = allTrades.filter(t => t.date === dateString);
+                
+                if (dayTrades.length > 0) {
+                    totalWins += dayTrades.filter(t => t.result === 'win').length;
+                    totalLosses += dayTrades.filter(t => t.result === 'loss').length;
+                    const dayProfit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+                    totalProfit += dayProfit;
+                    totalValue += dayTrades.reduce((acc, t) => acc + t.value, 0);
+                    totalPayout += dayTrades.reduce((acc, t) => acc + t.payout, 0);
+                    
+                    // Calcular drawdown
+                    runningBalance += dayProfit;
+                    if (runningBalance > peak) {
+                        peak = runningBalance;
+                    } else {
+                        const currentDrawdown = peak - runningBalance;
+                        if (currentDrawdown > maxDrawdown) {
+                            maxDrawdown = currentDrawdown;
+                        }
+                    }
+                    
+                    // Adicionar lucros/perdas para análise
+                    dayTrades.forEach(t => profits.push(t.profit));
+                }
+                
+                loopDate.setUTCDate(loopDate.getUTCDate() + 1);
+            }
+            
+            const totalTrades = totalWins + totalLosses;
+            const winRate = totalTrades > 0 ? ((totalWins / totalTrades) * 100).toFixed(1) : '0';
+            const avgPayout = totalTrades > 0 ? (totalPayout / totalTrades).toFixed(1) : '0';
+            
+            // Calcular fator de lucro
+            const grossProfit = profits.filter(p => p > 0).reduce((sum, p) => sum + p, 0);
+            const grossLoss = Math.abs(profits.filter(p => p < 0).reduce((sum, p) => sum + p, 0));
+            const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : '∞';
+            
+            // Expectativa matemática
+            const expectancy = totalTrades > 0 ? 
+                ((winRate/100 * avgPayout/100) - ((100-winRate)/100)).toFixed(2) : '0';
+            
+            // Avaliação de risco
+            let riskLevel = 'Baixo';
+            if (parseFloat(profitFactor) < 1.3 || parseFloat(expectancy) < 0.1) {
+                riskLevel = 'Médio';
+            }
+            if (parseFloat(profitFactor) < 1 || parseFloat(expectancy) < 0) {
+                riskLevel = 'Alto';
+            }
+            
+            // Atualizar elementos
+            document.getElementById('period-winrate').textContent = `${winRate}%`;
+            document.getElementById('period-result').innerHTML = `<span class="balance-value">${formatCurrency(totalProfit)}</span><span class="hidden-balance-value">R$0.00</span>`;
+            document.getElementById('period-risk').textContent = `${riskLevel}`;
+            
+            // Mostrar o resumo
+            summaryEl.classList.remove('hidden');
         }
 
         function renderCalendar() {
-            const calendarGrid = document.getElementById('calendar-grid');
-            const tooltip = document.getElementById('calendar-tooltip');
-            calendarGrid.innerHTML = '';
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const monthYearEl = document.getElementById('month-year');
-            monthYearEl.textContent = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^\w/, c => c.toUpperCase());
-            monthYearEl.onclick = () => {
-                if (!isLoggedIn) { showLoginPrompt(); return; }
-                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                window.location.href = `${baseUrl}report.html?year=${year}&month=${month}`;
-            };
-
+    const calendarGrid = document.getElementById('calendar-grid');
+    const tooltip = document.getElementById('calendar-tooltip');
+    if (!calendarGrid) return;
+    
+    calendarGrid.innerHTML = '';
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    // Atualizar título do período com informações mais detalhadas
+    const monthYearEl = document.getElementById('month-year');
+    if (monthYearEl) {
+        let periodTitle = '';
+        
+        if (dashboardFilter === 'weekly') {
             const { start, end } = getDateRange(dashboardFilter, currentDate);
+            periodTitle = `Semana: ${start.toLocaleDateString('pt-BR', { day: 'numeric' })} a ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+        } else if (dashboardFilter === 'bi-weekly') {
+            const { start, end } = getDateRange(dashboardFilter, currentDate);
+            periodTitle = `Quinzena: ${start.toLocaleDateString('pt-BR', { day: 'numeric' })} a ${end.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+        } else {
+            periodTitle = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }).replace(/^\w/, c => c.toUpperCase());
+        }
+        
+        monthYearEl.textContent = periodTitle;
+        monthYearEl.onclick = () => {
+            if (!isLoggedIn) { showLoginPrompt(); return; }
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            window.location.href = `${baseUrl}report.html?year=${year}&month=${month}`;
+        };
+        
+        // Adicionar classe para indicar que é clicável
+        monthYearEl.classList.add('cursor-pointer', 'hover:text-accent', 'transition-colors');
+    }
+
+    const { start, end } = getDateRange(dashboardFilter, currentDate);
+    
+    // Atualizar resumo do período
+    updatePeriodSummary(start, end);
+    
+    // Cabeçalho dos dias da semana com melhor contraste
+    ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'text-center font-bold text-xs text-zinc-500 dark:text-zinc-400 py-1';
+        dayHeader.textContent = day;
+        calendarGrid.appendChild(dayHeader);
+    });
+    
+    // Adicionar células vazias para os dias antes do início do período
+    const firstDayOffset = start.getUTCDay();
+    for (let i = 0; i < firstDayOffset; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day-cell empty';
+        calendarGrid.appendChild(emptyCell);
+    }
+
+    let loopDate = new Date(start);
+    while(loopDate <= end) {
+        const currentDateForButton = new Date(loopDate);
+        const dayEl = document.createElement('button');
+        dayEl.onclick = () => {
+            setView('trader', { date: currentDateForButton });
+        };
+        
+        const dayOfWeek = loopDate.getUTCDay();
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+        const isToday = loopDate.toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
+        const dateString = loopDate.toISOString().split('T')[0];
+        const dayTrades = allTrades.filter(t => t.date === dateString);
+
+        let profitHTML = '';
+        const elClasses = ['day-cell', 'relative', 'h-16', 'sm:h-24', 'rounded-lg', 'flex', 'flex-col', 'justify-between', 'items-center', 'p-1', 'transition-all', 'hover:shadow-md', 'hover:-translate-y-1'];
+
+        // Adicionar classe para dispositivos touch
+        if ('ontouchstart' in window) {
+            elClasses.push('touch-optimized');
+        }
+
+        if (isWeekend) {
+            elClasses.push('weekend');
+        }
+        
+        if (isToday) {
+            elClasses.push('ring-2', 'ring-accent', 'ring-offset-1');
+        }
+
+        if (dayTrades.length > 0) {
+            const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+            elClasses.push(profit >= 0 ? 'day-win' : 'day-loss');
             
-            ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].forEach(day => calendarGrid.appendChild(Object.assign(document.createElement('div'), { className: 'text-center font-bold text-xs text-zinc-400', textContent: day })));
+            const wins = dayTrades.filter(t => t.result === 'win').length;
+            const winRate = ((wins / dayTrades.length) * 100).toFixed(0);
+            const profitColor = profit >= 0 ? 'text-green-500' : 'text-red-500';
             
-            const firstDayOffset = start.getUTCDay();
-            for (let i = 0; i < firstDayOffset; i++) {
-                calendarGrid.appendChild(document.createElement('div'));
-            }
-
-            let loopDate = new Date(start);
-            while(loopDate <= end) {
-                const currentDateForButton = new Date(loopDate);
-                const dayEl = document.createElement('button');
-                dayEl.onclick = () => {
-                    setView('trader', { date: currentDateForButton });
-                };
-                
-                const dayOfWeek = loopDate.getUTCDay();
-                const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                const dateString = loopDate.toISOString().split('T')[0];
-                const dayTrades = allTrades.filter(t => t.date === dateString);
-
-                let profitHTML = '';
-                const elClasses = ['day-cell', 'relative', 'h-16', 'sm:h-24', 'rounded-lg', 'flex', 'flex-col', 'justify-center', 'items-center', 'p-1'];
-
-                if (isWeekend) {
-                    elClasses.push('weekend');
-                }
-
-                if (dayTrades.length > 0) {
-                    const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
-                    elClasses.push(profit >= 0 ? 'day-win' : 'day-loss');
-                    
-                    const profitColor = profit >= 0 ? 'text-green-500' : 'text-red-500';
-                    if (showCalendarProfit) { 
-                        profitHTML = `<span class="text-xs sm:text-sm font-bold ${profitColor}"><span class="balance-value">${formatCurrency(profit)}</span><span class="hidden-balance-value">----</span></span>`; 
-                    }
-                }
-
-                dayEl.className = elClasses.join(' ');
-                dayEl.innerHTML = `<span class="absolute top-1.5 right-1.5 text-xs text-zinc-500 dark:text-zinc-400">${loopDate.getUTCDate()}</span><div class="flex items-center justify-center h-full">${profitHTML}</div>`;
-                
-                dayEl.onmouseenter = (e) => {
-                    if (dayTrades.length > 0) {
-                        const wins = dayTrades.filter(t => t.result === 'win').length;
-                        const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
-                        tooltip.innerHTML = `<strong>${wins} W</strong> x <strong>${dayTrades.length - wins} L</strong> | <strong>${formatCurrency(profit)}</strong>`;
-                        tooltip.classList.remove('hidden');
-                        tooltip.style.left = `${e.clientX + 15}px`;
-                        tooltip.style.top = `${e.clientY - 40}px`;
-                        tooltip.classList.add('opacity-100', 'translate-y-0');
-                    }
-                };
-                dayEl.onmouseleave = () => {
-                    tooltip.classList.remove('opacity-100', 'translate-y-0');
-                    setTimeout(() => tooltip.classList.add('hidden'), 100);
-                };
-
-                calendarGrid.appendChild(dayEl);
-                loopDate.setUTCDate(loopDate.getUTCDate() + 1);
+            // Calcular métricas de risco para o dia
+            const dayRiskSum = dayTrades.reduce((sum, trade) => {
+                // Se o trade tem a propriedade risk, use-a, senão calcule
+                const tradeRisk = trade.risk || (trade.value / (trade.value * (trade.payout / 100)) * 100);
+                return sum + tradeRisk;
+            }, 0);
+            const avgRisk = dayTrades.length > 0 ? (dayRiskSum / dayTrades.length).toFixed(1) : '0';
+            
+            // Determinar classes de risco
+            let riskClass = 'bg-green-500';
+            if (parseFloat(avgRisk) > 60) riskClass = 'bg-yellow-500';
+            if (parseFloat(avgRisk) > 80) riskClass = 'bg-red-500';
+            
+            // Determinar classes de win rate
+            let winRateClass = 'bg-red-500';
+            if (parseFloat(winRate) >= 50) winRateClass = 'bg-yellow-500';
+            if (parseFloat(winRate) >= 65) winRateClass = 'bg-green-500';
+            
+            if (showCalendarProfit) { 
+                profitHTML = `
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs sm:text-sm font-bold ${profitColor}"><span class="balance-value">${formatCurrency(profit)}</span><span class="hidden-balance-value">----</span></span>
+                        <div class="flex gap-1 mt-1">
+                            <span class="w-2 h-2 rounded-full ${winRateClass}" title="Win Rate: ${winRate}%"></span>
+                            <span class="w-2 h-2 rounded-full ${riskClass}" title="Risco Médio: ${avgRisk}%"></span>
+                        </div>
+                    </div>
+                `; 
+            } else {
+                profitHTML = `
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs sm:text-sm font-bold ${profitColor}">${wins}W/${dayTrades.length-wins}L</span>
+                        <div class="flex gap-1 mt-1">
+                            <span class="w-2 h-2 rounded-full ${winRateClass}" title="Win Rate: ${winRate}%"></span>
+                            <span class="w-2 h-2 rounded-full ${riskClass}" title="Risco Médio: ${avgRisk}%"></span>
+                        </div>
+                    </div>
+                `;
             }
         }
+
+        dayEl.className = elClasses.join(' ');
+        dayEl.innerHTML = `
+            <span class="absolute top-1.5 right-1.5 text-xs font-medium ${isToday ? 'text-accent' : 'text-zinc-500 dark:text-zinc-400'}">${loopDate.getUTCDate()}</span>
+            <div class="flex items-center justify-center h-full">${profitHTML}</div>
+        `;
+        
+        // Adicionar feedback tátil para dispositivos móveis
+        if ('ontouchstart' in window) {
+            dayEl.ontouchstart = () => dayEl.classList.add('active-touch');
+            dayEl.ontouchend = () => dayEl.classList.remove('active-touch');
+        }
+        
+        dayEl.onmouseenter = (e) => {
+            if (dayTrades.length > 0) {
+                const wins = dayTrades.filter(t => t.result === 'win').length;
+                const profit = dayTrades.reduce((acc, t) => acc + t.profit, 0);
+                const winRate = dayTrades.length > 0 ? ((wins / dayTrades.length) * 100).toFixed(1) : '0';
+                
+                // Calcular métricas de risco para o dia
+                const dayRiskSum = dayTrades.reduce((sum, trade) => {
+                    const tradeRisk = trade.risk || (trade.value / (trade.value * (trade.payout / 100)) * 100);
+                    return sum + tradeRisk;
+                }, 0);
+                const avgRisk = dayTrades.length > 0 ? (dayRiskSum / dayTrades.length).toFixed(1) : '0';
+                
+                // Calcular payout médio
+                const avgPayout = dayTrades.length > 0 ?
+                    (dayTrades.reduce((sum, trade) => sum + trade.payout, 0) / dayTrades.length).toFixed(1) : '0';
+                
+                // Tooltip aprimorado com mais informações
+                tooltip.innerHTML = `
+                    <div class="font-medium">${loopDate.toLocaleDateString('pt-BR', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    })}</div>
+                    <div class="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                        <div class="text-sm">Operações:</div>
+                        <div class="text-sm font-medium">${dayTrades.length}</div>
+                        
+                        <div class="text-sm">Win Rate:</div>
+                        <div class="text-sm font-medium">${winRate}%</div>
+                        
+                        <div class="text-sm">Ganhos/Perdas:</div>
+                        <div class="text-sm font-medium">${wins}/${dayTrades.length - wins}</div>
+                        
+                        <div class="text-sm">Resultado:</div>
+                        <div class="text-sm font-medium ${profit >= 0 ? 'text-green-500' : 'text-red-500'}">
+                            ${formatCurrency(profit)}
+                        </div>
+                        
+                        <div class="text-sm">Risco Médio:</div>
+                        <div class="text-sm font-medium">${avgRisk}%</div>
+                        
+                        <div class="text-sm">Payout Médio:</div>
+                        <div class="text-sm font-medium">${avgPayout}%</div>
+                    </div>
+                `;
+                
+                // Posicionar tooltip com ajuste para não sair da tela
+                const rect = e.target.getBoundingClientRect();
+                let left = e.clientX + 15;
+                let top = e.clientY - 40;
+                
+                // Ajustar posição se estiver fora da tela
+                if (left + tooltip.offsetWidth > window.innerWidth) {
+                    left = window.innerWidth - tooltip.offsetWidth - 10;
+                }
+                
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
+                tooltip.classList.remove('hidden');
+                tooltip.classList.add('opacity-100', 'translate-y-0');
+            }
+        };
+        dayEl.onmouseleave = () => {
+            tooltip.classList.remove('opacity-100', 'translate-y-0');
+            setTimeout(() => tooltip.classList.add('hidden'), 100);
+        };
+
+        calendarGrid.appendChild(dayEl);
+        loopDate.setUTCDate(loopDate.getUTCDate() + 1);
+    }
+    
+    // Atualizar o resumo do período
+    updatePeriodSummary(start, end);
+    
+    // Atualizar ícones Lucide após renderizar o calendário
+    lucide.createIcons();
+    
+    // Otimizar para dispositivos móveis
+    if (window.innerWidth < 640) {
+        document.querySelectorAll('.day-cell').forEach(cell => {
+            cell.classList.add('touch-optimized');
+        });
+    }
+}
 
         function renderTraderView() {
             document.getElementById('form-date').textContent = activeDate.toLocaleDateString('pt-BR', { dateStyle: 'full', timeZone: 'UTC' }).replace(/^\w/, c => c.toUpperCase());
@@ -356,6 +772,43 @@
             const payout = parseFloat(document.getElementById('payout').value) || 0;
             const profit = (value * payout) / 100;
             document.getElementById('expected-profit').textContent = formatCurrency(profit);
+            
+            // Análise de risco
+            const riskRatio = (value / profit).toFixed(2);
+            const winRate = (100 / (100 + payout)).toFixed(2);
+            
+            // Classificação de risco
+            let riskLevel = 'Baixo';
+            let riskColor = 'text-green-500';
+            
+            if (riskRatio > 1.5) {
+                riskLevel = 'Médio';
+                riskColor = 'text-yellow-500';
+            }
+            if (riskRatio > 2) {
+                riskLevel = 'Alto';
+                riskColor = 'text-red-500';
+            }
+            
+            // Exibir análise de risco se o elemento existir
+            const riskAnalysis = document.getElementById('risk-analysis');
+            if (riskAnalysis) {
+                riskAnalysis.innerHTML = `
+                    <div class="mt-4 p-3 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Análise de Risco</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Relação Risco/Retorno:</p>
+                                <p class="font-medium ${riskColor}">${riskRatio}:1 (${riskLevel})</p>
+                            </div>
+                            <div>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">Taxa de Acerto Necessária:</p>
+                                <p class="font-medium">${winRate}%</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         function showLoginPrompt() {
@@ -363,13 +816,33 @@
         }
 
         function initializeEventListeners() {
-            document.querySelectorAll('.nav-btn[data-view]').forEach(btn => btn.addEventListener('click', () => setView(btn.dataset.view)));
+            // Navegação principal com feedback visual
+            document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Adicionar feedback visual
+                    btn.classList.add('scale-95');
+                    setTimeout(() => btn.classList.remove('scale-95'), 100);
+                    setView(btn.dataset.view);
+                });
+            });
+            
+            // Botão de adicionar trade com animação suave
             document.getElementById('fab-add-trade').addEventListener('click', () => { 
                 if (!isLoggedIn) { showLoginPrompt(); return; }
                 activeDate = new Date(); 
-                setView('trader'); 
+                // Adicionar animação ao botão
+                const btn = document.getElementById('fab-add-trade');
+                btn.classList.add('scale-90');
+                setTimeout(() => {
+                    btn.classList.remove('scale-90');
+                    setView('trader'); 
+                }, 150);
             });
+            
+            // Botões de voltar
             document.querySelectorAll('.nav-back').forEach(btn => btn.addEventListener('click', () => setView('dashboard')));
+            
+            // Toggle de tema com transição suave
             document.getElementById('theme-toggle-dash').addEventListener('click', () => { 
                 const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
                 document.documentElement.setAttribute('data-theme', newTheme); 
@@ -377,32 +850,74 @@
                 updateThemeIcons(newTheme); 
             });
             
-            document.getElementById('prev-period').addEventListener('click', () => { 
+            // Navegação de períodos com debounce para melhor desempenho
+            const prevPeriodBtn = document.getElementById('prev-period');
+            const nextPeriodBtn = document.getElementById('next-period');
+            
+            prevPeriodBtn.addEventListener('click', () => { 
+                // Adicionar feedback visual
+                prevPeriodBtn.classList.add('scale-95');
+                setTimeout(() => prevPeriodBtn.classList.remove('scale-95'), 100);
+                
                 if(dashboardFilter === 'monthly') currentDate.setUTCMonth(currentDate.getUTCMonth() - 1);
                 else if(dashboardFilter === 'weekly') currentDate.setUTCDate(currentDate.getUTCDate() - 7);
                 else if(dashboardFilter === 'bi-weekly') currentDate.setUTCDate(currentDate.getUTCDate() - 15);
-                renderDashboard(); 
+                
+                // Usar requestAnimationFrame para renderização suave
+                requestAnimationFrame(() => renderDashboard());
             });
-            document.getElementById('next-period').addEventListener('click', () => { 
+            
+            nextPeriodBtn.addEventListener('click', () => { 
+                // Adicionar feedback visual
+                nextPeriodBtn.classList.add('scale-95');
+                setTimeout(() => nextPeriodBtn.classList.remove('scale-95'), 100);
+                
                 if(dashboardFilter === 'monthly') currentDate.setUTCMonth(currentDate.getUTCMonth() + 1);
                 else if(dashboardFilter === 'weekly') currentDate.setUTCDate(currentDate.getUTCDate() + 7);
                 else if(dashboardFilter === 'bi-weekly') currentDate.setUTCDate(currentDate.getUTCDate() + 15);
-                renderDashboard(); 
+                
+                // Usar requestAnimationFrame para renderização suave
+                requestAnimationFrame(() => renderDashboard());
             });
 
-            document.getElementById('toggle-calendar-profit').addEventListener('click', (e) => { showCalendarProfit = !showCalendarProfit; const button = e.currentTarget; button.innerHTML = `<i data-lucide="${showCalendarProfit ? 'eye' : 'eye-off'}"></i>`; lucide.createIcons(); renderCalendar(); });
+            // Toggle de visualização de lucro com animação
+            document.getElementById('toggle-calendar-profit').addEventListener('click', (e) => { 
+                showCalendarProfit = !showCalendarProfit; 
+                const button = e.currentTarget; 
+                button.classList.add('scale-95');
+                setTimeout(() => button.classList.remove('scale-95'), 100);
+                button.innerHTML = `<i data-lucide="${showCalendarProfit ? 'eye' : 'eye-off'}"></i>`; 
+                lucide.createIcons(); 
+                renderCalendar(); 
+            });
             
+            // Botões de filtro com melhor desempenho
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
+                    // Atualizar UI imediatamente para feedback instantâneo
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    
                     dashboardFilter = e.currentTarget.dataset.filter;
                     if(isLoggedIn) {
                         userSettings.dashboardFilter = dashboardFilter;
                         await dataManager.saveSettings(userSettings);
                     }
-                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
-                    renderDashboard();
+                    
+                    // Usar requestAnimationFrame para renderização suave
+                    requestAnimationFrame(() => renderDashboard());
                 });
+            });
+            
+            // Adicionar suporte a navegação por teclado para acessibilidade
+            document.addEventListener('keydown', (e) => {
+                if (body.getAttribute('data-view') !== 'dashboard') return;
+                
+                if (e.key === 'ArrowLeft') {
+                    prevPeriodBtn.click();
+                } else if (e.key === 'ArrowRight') {
+                    nextPeriodBtn.click();
+                }
             });
 
             document.getElementById('payout').addEventListener('input', calculateExpectedProfit);
@@ -512,11 +1027,23 @@
             });
         }
 
+        // Enhanced navigation with smooth transitions
+        function navigateToPage(page) {
+            const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                window.location.href = baseUrl + page;
+            }, 150);
+        }
+
+        // Enhanced user interface management
         function updateWelcomeHeader(user) {
             const welcomeEl = document.getElementById('user-welcome');
             const greetingEl = document.getElementById('user-greeting');
             const avatarEl = document.getElementById('user-avatar');
             const loginPrompt = document.getElementById('login-prompt');
+            
+            if (!welcomeEl || !greetingEl || !avatarEl || !loginPrompt) return;
             
             welcomeEl.classList.remove('hidden');
 
