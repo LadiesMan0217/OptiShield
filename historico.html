@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiShield • Histórico de Operações</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    
+    <!-- Meta tags para melhor SEO e experiência mobile -->
+    <meta name="description" content="OptiShield - Análise detalhada do histórico de operações">
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        :root {
+            --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --accent-hover: #2563eb; --danger: #ef4444; --danger-hover: #dc2626; --warning: #f59e0b; --success: #16a34a; --success-hover: #15803d; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 500ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --accent-hover: #1d4ed8; --danger-hover: #b91c1c; --success-hover: #166534; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #f9fafb; --input-border: #d1d5db; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color var(--transition-normal), color var(--transition-normal); padding-bottom: 80px; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        .card { background-color: var(--card-bg); border: 1px solid var(--card-border); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition-fast), transform var(--transition-fast); }
+        .card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        
+        /* Table Styles */
+        .history-table {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+        .history-table th {
+            background-color: var(--input-bg);
+            color: var(--fg);
+            font-weight: 600;
+            padding: 16px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--card-border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--card-border);
+            transition: background-color var(--transition-fast);
+        }
+        .history-table tbody tr:hover {
+            background-color: var(--input-bg);
+        }
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        
+        /* Control Panel Styles */
+        .control-panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .filter-btn {
+            transition: all var(--transition-fast);
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 16px;
+            border: 1px solid var(--card-border);
+            background-color: var(--card-bg);
+            color: var(--fg);
+        }
+        .filter-btn:hover {
+            background-color: var(--input-bg);
+            transform: translateY(-1px);
+        }
+        .filter-btn.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+        .filter-btn.active:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        /* Input Styles */
+        .form-input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: var(--fg);
+            transition: all var(--transition-fast);
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* Result Colors */
+        .result-positive { color: var(--success); font-weight: 600; }
+        .result-negative { color: var(--danger); font-weight: 600; }
+        .result-neutral { color: var(--fg-secondary); font-weight: 600; }
+        
+        /* Tablet styles */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .history-table {
+                font-size: 15px;
+            }
+            .control-panel {
+                padding: 20px;
+            }
+            .card {
+                padding: 1.25rem;
+            }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .history-table {
+                font-size: 14px;
+            }
+            .history-table th,
+            .history-table td {
+                padding: 8px 6px;
+            }
+            .control-panel {
+                padding: 16px;
+            }
+            
+            /* Improved mobile layout */
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            /* Bottom navigation improvements */
+            nav .nav-btn { padding: 0.5rem 0.25rem; min-height: 3.5rem; }
+            nav .nav-btn span { font-size: 0.7rem; }
+            nav .nav-btn i { width: 1.25rem; height: 1.25rem; }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .history-table {
+                font-size: 12px;
+            }
+            .history-table th,
+            .history-table td {
+                padding: 6px 4px;
+            }
+            .control-panel {
+                padding: 12px;
+            }
+            .card {
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Bottom navigation enhancements */
+        nav .nav-btn {
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.5rem;
+            margin: 0 0.125rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        nav .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        nav .nav-btn:hover::before {
+            left: 100%;
+        }
+        
+        nav .nav-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        nav .nav-btn.text-blue-500 {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #3b82f6 !important;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Enhanced interactions */
+        .filter-btn:active,
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Smooth loading states */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--card-border);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Loading Animation */
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--card-border);
+            border-bottom-color: var(--accent);
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Pagination */
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--card-border);
+            background-color: var(--card-bg);
+            color: var(--fg);
+            border-radius: 6px;
+            transition: all var(--transition-fast);
+        }
+        .pagination-btn:hover:not(:disabled) {
+            background-color: var(--input-bg);
+            transform: translateY(-1px);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination-btn.active {
+            background-color: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        /* Loader */
+        #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
+        .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+
+    <div id="loader"><div class="spinner"></div></div>
+
+    <div id="app-content" class="hidden">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8 pt-4">
+            <div class="flex items-center">
+                <button id="nav-back-history" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 mr-4 transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold">Histórico de Operações</h1>
+                    <p class="text-sm text-zinc-400 mt-1">Análise detalhada de todas as suas operações</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="theme-toggle" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800 transition-colors" aria-label="Alternar tema">
+                    <i data-lucide="sun" class="hidden"></i>
+                    <i data-lucide="moon"></i>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <!-- Month Navigation -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <button id="prev-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <h2 id="current-month" class="text-xl font-bold mx-4 min-w-[200px] text-center">Janeiro de 2025</h2>
+                    <button id="next-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-zinc-400">Total de operações:</span>
+                    <span id="total-operations" class="font-bold">0</span>
+                </div>
+            </div>
+            
+            <!-- Filters Row 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <!-- Search -->
+                <div>
+                    <label class="block text-sm font-medium text-zinc-400 mb-2">Buscar</label>
+                    <input type="text" id="search-input" placeholder="Buscar por data, valor ou anotações..." class="form-input w-full">
+                </div>
+                
+                <!-- Date Range -->
+                <div>
+                    <label class="block text-sm font-medium text-zinc-400 mb-2">Período Personalizado</label>
+                    <div class="flex space-x-2">
+                        <input type="date" id="date-from" class="form-input flex-1">
+                        <input type="date" id="date-to" class="form-input flex-1">
+                    </div>
+                </div>
+                
+                <!-- Result Filter -->
+                <div>
+                    <label class="block text-sm font-medium text-zinc-400 mb-2">Filtrar por Resultado</label>
+                    <div class="flex space-x-2">
+                        <button id="filter-all" class="filter-btn active flex-1">Todos</button>
+                        <button id="filter-win" class="filter-btn flex-1">Win</button>
+                        <button id="filter-loss" class="filter-btn flex-1">Loss</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filters Row 2 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Sort Options -->
+                <div>
+                    <label class="block text-sm font-medium text-zinc-400 mb-2">Ordenar por</label>
+                    <div class="flex space-x-2">
+                        <select id="sort-column" class="form-input flex-1">
+                            <option value="date">Data</option>
+                            <option value="result">Resultado Financeiro</option>
+                            <option value="winrate">Assertividade</option>
+                            <option value="balance">Saldo Acumulado</option>
+                        </select>
+                        <button id="sort-direction" class="filter-btn px-4" data-direction="desc">
+                            <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Clear Filters -->
+                <div class="flex items-end">
+                    <button id="clear-filters" class="filter-btn w-full">
+                        <i data-lucide="x" class="w-4 h-4 inline mr-2"></i>
+                        Limpar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loading-state" class="text-center py-8 hidden">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-zinc-400">Carregando operações...</p>
+        </div>
+        
+        <!-- History Table -->
+        <div class="overflow-x-auto">
+            <table class="history-table w-full">
+                <thead>
+                    <tr>
+                        <th class="cursor-pointer hover:bg-zinc-700" data-sort="date">
+                            Data
+                            <i data-lucide="chevron-down" class="w-4 h-4 inline ml-1"></i>
+                        </th>
+                        <th>Placar</th>
+                        <th class="cursor-pointer hover:bg-zinc-700" data-sort="winrate">
+                            Assertividade
+                            <i data-lucide="chevron-down" class="w-4 h-4 inline ml-1"></i>
+                        </th>
+                        <th class="cursor-pointer hover:bg-zinc-700" data-sort="result">
+                            Resultado Financeiro
+                            <i data-lucide="chevron-down" class="w-4 h-4 inline ml-1"></i>
+                        </th>
+                        <th class="cursor-pointer hover:bg-zinc-700" data-sort="balance">
+                            Saldo Acumulado
+                            <i data-lucide="chevron-down" class="w-4 h-4 inline ml-1"></i>
+                        </th>
+                        <th>Anotações</th>
+                    </tr>
+                </thead>
+                <tbody id="history-tbody">
+                    <!-- Table rows will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-12 hidden">
+            <i data-lucide="inbox" class="w-16 h-16 mx-auto text-zinc-400 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">Nenhuma operação encontrada</h3>
+            <p class="text-zinc-400 mb-4">Não há operações para o período ou filtros selecionados.</p>
+            <a href="index.html" class="filter-btn inline-flex items-center">
+                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                Registrar Nova Operação
+            </a>
+        </div>
+        
+        <!-- Pagination -->
+        <div id="pagination" class="flex justify-center items-center space-x-2 mt-6 hidden">
+            <button id="prev-page" class="pagination-btn">
+                <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </button>
+            <div id="page-numbers" class="flex space-x-1">
+                <!-- Page numbers will be dynamically inserted here -->
+            </div>
+            <button id="next-page" class="pagination-btn">
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="text-center text-xs text-zinc-400 mt-12">
+            <p>© Todos os direitos reservados a Caio Rodrigues – Desenvolvido por Caio Rodrigues</p>
+        </footer>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center z-30">
+        <a href="index.html" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400">
+            <i data-lucide="layout-dashboard"></i>
+            <span class="text-xs mt-1">Dashboard</span>
+        </a>
+        <a href="report.html" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400">
+            <i data-lucide="bar-chart-3"></i>
+            <span class="text-xs mt-1">Relatório</span>
+        </a>
+        <button class="nav-btn flex flex-col items-center text-blue-500">
+            <i data-lucide="history"></i>
+            <span class="text-xs mt-1">Histórico</span>
+        </button>
+        <a href="settings.html" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400">
+            <i data-lucide="settings"></i>
+            <span class="text-xs mt-1">Ajustes</span>
+        </a>
+    </nav>
+    </div>
+    
+    <script type="module">
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update icon
+            const sunIcon = themeToggle.querySelector('[data-lucide="sun"]');
+            const moonIcon = themeToggle.querySelector('[data-lucide="moon"]');
+            if (newTheme === 'light') {
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+        });
+        
+        // Initialize theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        html.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'light') {
+            const sunIcon = themeToggle.querySelector('[data-lucide="sun"]');
+            const moonIcon = themeToggle.querySelector('[data-lucide="moon"]');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        }
+        
+        // Firebase Configuration
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where, orderBy, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe3WZmGmglmXb2GjCL5efKvhczp6bp5us",
+            authDomain: "optishield-17bcd.firebaseapp.com",
+            projectId: "optishield-17bcd",
+            storageBucket: "optishield-17bcd.firebasestorage.app",
+            messagingSenderId: "726740371491",
+            appId: "1:726740371491:web:45d5298e6343e1ee450996",
+            measurementId: "G-8B8EX802CQ"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let userId = null;
+        let userSettings = {};
+        
+        // History Management Class
+        class HistoryManager {
+            constructor() {
+                this.currentMonth = new Date();
+                this.currentPage = 1;
+                this.itemsPerPage = 50;
+                this.allOperations = [];
+                this.filteredOperations = [];
+                this.sortColumn = 'date';
+                this.sortDirection = 'desc';
+                this.resultFilter = 'all';
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.updateMonthDisplay();
+            }
+            
+            async initialize() {
+                await this.loadUserSettings();
+                this.updateMonthDisplay();
+                this.loadOperations();
+            }
+            
+            async loadUserSettings() {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', userId));
+                    if (userDoc.exists()) {
+                        userSettings = userDoc.data();
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar configurações:', error);
+                }
+            }
+            
+            initializeElements() {
+                this.elements = {
+                    currentMonthEl: document.getElementById('current-month'),
+                    totalOperationsEl: document.getElementById('total-operations'),
+                    searchInput: document.getElementById('search-input'),
+                    dateFrom: document.getElementById('date-from'),
+                    dateTo: document.getElementById('date-to'),
+                    sortColumn: document.getElementById('sort-column'),
+                    sortDirection: document.getElementById('sort-direction'),
+                    historyTbody: document.getElementById('history-tbody'),
+                    loadingState: document.getElementById('loading-state'),
+                    emptyState: document.getElementById('empty-state'),
+                    pagination: document.getElementById('pagination')
+                };
+            }
+            
+            bindEvents() {
+                // Month navigation
+                document.getElementById('prev-month').addEventListener('click', () => this.changeMonth(-1));
+                document.getElementById('next-month').addEventListener('click', () => this.changeMonth(1));
+                
+                // Filters
+                document.getElementById('filter-all').addEventListener('click', () => this.setResultFilter('all'));
+                document.getElementById('filter-win').addEventListener('click', () => this.setResultFilter('win'));
+                document.getElementById('filter-loss').addEventListener('click', () => this.setResultFilter('loss'));
+                
+                // Search and date filters
+                this.elements.searchInput.addEventListener('input', () => this.applyFilters());
+                this.elements.dateFrom.addEventListener('change', () => this.applyFilters());
+                this.elements.dateTo.addEventListener('change', () => this.applyFilters());
+                
+                // Sort
+                this.elements.sortColumn.addEventListener('change', () => this.applySorting());
+                this.elements.sortDirection.addEventListener('click', () => this.toggleSortDirection());
+                
+                // Clear filters
+                document.getElementById('clear-filters').addEventListener('click', () => this.clearFilters());
+                
+                // Table header sorting
+                document.querySelectorAll('th[data-sort]').forEach(th => {
+                    th.addEventListener('click', () => this.sortByColumn(th.dataset.sort));
+                });
+            }
+            
+            updateMonthDisplay() {
+                const monthNames = [
+                    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                ];
+                const monthName = monthNames[this.currentMonth.getMonth()];
+                const year = this.currentMonth.getFullYear();
+                this.elements.currentMonthEl.textContent = `${monthName} de ${year}`;
+            }
+            
+            changeMonth(direction) {
+                this.currentMonth.setMonth(this.currentMonth.getMonth() + direction);
+                this.updateMonthDisplay();
+                this.loadOperations();
+            }
+            
+            setResultFilter(filter) {
+                // Update active filter button
+                document.querySelectorAll('[id^="filter-"]').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`filter-${filter}`).classList.add('active');
+                
+                this.resultFilter = filter;
+                this.applyFilters();
+            }
+            
+            toggleSortDirection() {
+                this.sortDirection = this.sortDirection === 'desc' ? 'asc' : 'desc';
+                const icon = this.elements.sortDirection.querySelector('i');
+                icon.setAttribute('data-lucide', this.sortDirection === 'desc' ? 'arrow-down' : 'arrow-up');
+                lucide.createIcons();
+                this.applySorting();
+            }
+            
+            sortByColumn(column) {
+                this.sortColumn = column;
+                this.elements.sortColumn.value = column;
+                this.applySorting();
+            }
+            
+            clearFilters() {
+                this.elements.searchInput.value = '';
+                this.elements.dateFrom.value = '';
+                this.elements.dateTo.value = '';
+                this.elements.sortColumn.value = 'date';
+                this.sortColumn = 'date';
+                this.sortDirection = 'desc';
+                this.resultFilter = 'all';
+                
+                // Reset filter buttons
+                document.querySelectorAll('[id^="filter-"]').forEach(btn => btn.classList.remove('active'));
+                document.getElementById('filter-all').classList.add('active');
+                
+                // Reset sort direction icon
+                const icon = this.elements.sortDirection.querySelector('i');
+                icon.setAttribute('data-lucide', 'arrow-down');
+                lucide.createIcons();
+                
+                this.applyFilters();
+            }
+            
+            async loadOperations() {
+                this.showLoading(true);
+                
+                try {
+                    const startOfMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth(), 1);
+                    const endOfMonth = new Date(this.currentMonth.getFullYear(), this.currentMonth.getMonth() + 1, 0);
+                    
+                    const operationsQuery = query(
+                        collection(db, 'users', userId, 'trades'),
+                        where('date', '>=', startOfMonth.toISOString().split('T')[0]),
+                        where('date', '<=', endOfMonth.toISOString().split('T')[0]),
+                        orderBy('date', 'desc')
+                    );
+                    
+                    const querySnapshot = await getDocs(operationsQuery);
+                    const trades = [];
+                    
+                    // Get all trades for the month
+                    querySnapshot.docs.forEach((doc) => {
+                        const data = doc.data();
+                        trades.push({
+                            id: doc.id,
+                            date: data.date, // Date is already stored as string
+                            value: data.value || 0,
+                            payout: data.payout || 0,
+                            result: data.result || 'loss',
+                            profit: data.profit || 0
+                        });
+                    });
+                    
+                    // Get initial balance from user settings
+                    const initialBalance = userSettings.initialBalance || 0;
+                    let runningBalance = initialBalance;
+                    
+                    // Group trades by date
+                    const tradesByDate = {};
+                    trades.forEach(trade => {
+                        if (!tradesByDate[trade.date]) {
+                            tradesByDate[trade.date] = [];
+                        }
+                        tradesByDate[trade.date].push(trade);
+                    });
+                    
+                    // Process each day
+                    const operations = [];
+                    Object.keys(tradesByDate).sort().forEach(date => {
+                        const dayTrades = tradesByDate[date];
+                        const wins = dayTrades.filter(t => t.result === 'win').length;
+                        const losses = dayTrades.length - wins;
+                        const winRate = dayTrades.length > 0 ? (wins / dayTrades.length) * 100 : 0;
+                        const dayResult = dayTrades.reduce((sum, trade) => sum + trade.profit, 0);
+                        
+                        runningBalance += dayResult;
+                        operations.push({
+                            id: `day_${date}`,
+                            date: new Date(date),
+                            wins: wins,
+                            losses: losses,
+                            winRate: winRate,
+                            result: dayResult,
+                            balance: runningBalance,
+                            notes: '',
+                            trades: dayTrades
+                        });
+                    });
+                    
+                    // Reverse to show most recent first
+                    operations.reverse();
+                    
+                    this.allOperations = operations;
+                    this.applyFilters();
+                } catch (error) {
+                    console.error('Erro ao carregar operações:', error);
+                    this.allOperations = [];
+                    this.applyFilters();
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+
+            
+            applyFilters() {
+                let filtered = [...this.allOperations];
+                
+                // Search filter
+                const searchTerm = this.elements.searchInput.value.toLowerCase();
+                if (searchTerm) {
+                    filtered = filtered.filter(op => 
+                        op.date.toLocaleDateString('pt-BR').includes(searchTerm) ||
+                        op.result.toFixed(2).includes(searchTerm) ||
+                        op.notes.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                // Date range filter
+                const dateFrom = this.elements.dateFrom.value;
+                const dateTo = this.elements.dateTo.value;
+                if (dateFrom) {
+                    filtered = filtered.filter(op => op.date >= new Date(dateFrom));
+                }
+                if (dateTo) {
+                    filtered = filtered.filter(op => op.date <= new Date(dateTo));
+                }
+                
+                // Result filter
+                if (this.resultFilter === 'win') {
+                    filtered = filtered.filter(op => op.result > 0);
+                } else if (this.resultFilter === 'loss') {
+                    filtered = filtered.filter(op => op.result < 0);
+                }
+                
+                this.filteredOperations = filtered;
+                this.applySorting();
+            }
+            
+            applySorting() {
+                this.filteredOperations.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (this.sortColumn) {
+                        case 'date':
+                            aVal = a.date;
+                            bVal = b.date;
+                            break;
+                        case 'result':
+                            aVal = a.result;
+                            bVal = b.result;
+                            break;
+                        case 'winrate':
+                            aVal = a.winRate;
+                            bVal = b.winRate;
+                            break;
+                        case 'balance':
+                            aVal = a.balance;
+                            bVal = b.balance;
+                            break;
+                        default:
+                            aVal = a.date;
+                            bVal = b.date;
+                    }
+                    
+                    if (this.sortDirection === 'desc') {
+                        return bVal > aVal ? 1 : -1;
+                    } else {
+                        return aVal > bVal ? 1 : -1;
+                    }
+                });
+                
+                this.renderTable();
+            }
+            
+            renderTable() {
+                this.elements.totalOperationsEl.textContent = this.filteredOperations.length;
+                
+                if (this.filteredOperations.length === 0) {
+                    this.elements.historyTbody.innerHTML = '';
+                    this.elements.emptyState.classList.remove('hidden');
+                    this.elements.pagination.classList.add('hidden');
+                    return;
+                }
+                
+                this.elements.emptyState.classList.add('hidden');
+                
+                // Group operations by day
+                const groupedByDay = this.groupOperationsByDay(this.filteredOperations);
+                
+                // Pagination on grouped days
+                const dayKeys = Object.keys(groupedByDay).sort((a, b) => new Date(b) - new Date(a));
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const pageDays = dayKeys.slice(startIndex, endIndex);
+                
+                // Render grouped rows
+                this.elements.historyTbody.innerHTML = pageDays.map(dayKey => {
+                    const dayOperations = groupedByDay[dayKey];
+                    const dayData = this.calculateDayData(dayOperations);
+                    const resultClass = dayData.result > 0 ? 'result-positive' : dayData.result < 0 ? 'result-negative' : 'result-neutral';
+                    const balanceClass = dayData.balance > 1000 ? 'result-positive' : dayData.balance < 1000 ? 'result-negative' : 'result-neutral';
+                    
+                    let html = `
+                        <tr class="day-summary-row cursor-pointer hover:bg-zinc-800" data-day="${dayKey}" onclick="historyManager.toggleDayDetails('${dayKey}')">
+                            <td class="flex items-center">
+                                <i data-lucide="chevron-right" class="w-4 h-4 mr-2 transition-transform" id="chevron-${dayKey}"></i>
+                                ${new Date(dayKey).toLocaleDateString('pt-BR')}
+                                <span class="ml-2 text-xs text-zinc-400">(${dayOperations.length} operações)</span>
+                            </td>
+                            <td>
+                                <span class="text-green-500 font-semibold">${dayData.wins}W</span> / 
+                                <span class="text-red-500 font-semibold">${dayData.losses}L</span>
+                            </td>
+                            <td>${dayData.winRate.toFixed(1)}%</td>
+                            <td class="${resultClass}">R$ ${dayData.result.toFixed(2)}</td>
+                            <td class="${balanceClass}">R$ ${dayData.balance.toFixed(2)}</td>
+                            <td>
+                                ${dayData.hasNotes ? `
+                                    <i data-lucide="sticky-note" class="w-4 h-4 text-amber-500"></i>
+                                ` : '<span class="text-zinc-500">-</span>'}
+                            </td>
+                        </tr>
+                    `;
+                    
+                    // Add individual operation rows (initially hidden)
+                    dayOperations.forEach(op => {
+                        const opResultClass = op.result > 0 ? 'result-positive' : op.result < 0 ? 'result-negative' : 'result-neutral';
+                        const opBalanceClass = op.balance > 1000 ? 'result-positive' : op.balance < 1000 ? 'result-negative' : 'result-neutral';
+                        
+                        html += `
+                            <tr class="day-detail-row hidden bg-zinc-900" data-day="${dayKey}">
+                                <td class="pl-8">${op.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</td>
+                                <td>
+                                    <span class="text-green-500 font-semibold">${op.wins}W</span> / 
+                                    <span class="text-red-500 font-semibold">${op.losses}L</span>
+                                </td>
+                                <td>${op.winRate.toFixed(1)}%</td>
+                                <td class="${opResultClass}">R$ ${op.result.toFixed(2)}</td>
+                                <td class="${opBalanceClass}">R$ ${op.balance.toFixed(2)}</td>
+                                <td>
+                                    ${op.notes ? `
+                                        <div class="flex items-center">
+                                            <i data-lucide="sticky-note" class="w-4 h-4 text-amber-500 mr-2"></i>
+                                            <span class="text-sm text-zinc-400 truncate max-w-[200px] editable-note" 
+                                                  data-operation-id="${op.id}" 
+                                                  title="${op.notes}" 
+                                                  onclick="historyManager.editNote(event, '${op.id}')">${op.notes}</span>
+                                        </div>
+                                    ` : `<span class="text-zinc-500 editable-note cursor-pointer" 
+                                              data-operation-id="${op.id}" 
+                                              onclick="historyManager.editNote(event, '${op.id}')">Adicionar nota...</span>`}
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    return html;
+                }).join('');
+                
+                // Re-initialize Lucide icons
+                lucide.createIcons();
+                
+                // Update pagination (now based on days, not individual operations)
+                this.updatePagination(dayKeys.length);
+            }
+            
+            groupOperationsByDay(operations) {
+                const grouped = {};
+                operations.forEach(op => {
+                    const dayKey = op.date.toISOString().split('T')[0];
+                    if (!grouped[dayKey]) {
+                        grouped[dayKey] = [];
+                    }
+                    grouped[dayKey].push(op);
+                });
+                return grouped;
+            }
+            
+            calculateDayData(dayOperations) {
+                const wins = dayOperations.reduce((sum, op) => sum + op.wins, 0);
+                const losses = dayOperations.reduce((sum, op) => sum + op.losses, 0);
+                const result = dayOperations.reduce((sum, op) => sum + op.result, 0);
+                const balance = dayOperations[dayOperations.length - 1].balance; // Last operation's balance
+                const winRate = wins + losses > 0 ? (wins / (wins + losses)) * 100 : 0;
+                const hasNotes = dayOperations.some(op => op.notes && op.notes.trim());
+                
+                return { wins, losses, result, balance, winRate, hasNotes };
+            }
+            
+            toggleDayDetails(dayKey) {
+                const chevron = document.getElementById(`chevron-${dayKey}`);
+                const detailRows = document.querySelectorAll(`tr.day-detail-row[data-day="${dayKey}"]`);
+                
+                const isExpanded = !detailRows[0].classList.contains('hidden');
+                
+                if (isExpanded) {
+                    // Collapse
+                    detailRows.forEach(row => row.classList.add('hidden'));
+                    chevron.style.transform = 'rotate(0deg)';
+                } else {
+                    // Expand
+                    detailRows.forEach(row => row.classList.remove('hidden'));
+                    chevron.style.transform = 'rotate(90deg)';
+                }
+            }
+            
+            editNote(event, operationId) {
+                event.stopPropagation();
+                
+                const noteElement = event.target;
+                const currentNote = noteElement.textContent === 'Adicionar nota...' ? '' : noteElement.textContent;
+                
+                // Create input element
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = currentNote;
+                input.className = 'bg-zinc-800 text-zinc-200 px-2 py-1 rounded text-sm w-full max-w-[200px]';
+                input.placeholder = 'Digite sua anotação...';
+                
+                // Replace note element with input
+                const parent = noteElement.parentElement;
+                parent.innerHTML = '';
+                parent.appendChild(input);
+                input.focus();
+                input.select();
+                
+                // Save on Enter or blur
+                const saveNote = async () => {
+                    const newNote = input.value.trim();
+                    
+                    try {
+                        // Find the operation and update it
+                        const operation = this.operations.find(op => op.id === operationId);
+                        if (operation) {
+                            operation.notes = newNote;
+                            
+                            // Update in Firebase
+                            const operationRef = doc(db, 'operations', operationId);
+                            await updateDoc(operationRef, { notes: newNote });
+                            
+                            // Re-render the table to show updated note
+                            this.applyFilters();
+                        }
+                    } catch (error) {
+                        console.error('Erro ao salvar anotação:', error);
+                        alert('Erro ao salvar anotação. Tente novamente.');
+                    }
+                };
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        saveNote();
+                    } else if (e.key === 'Escape') {
+                        this.applyFilters(); // Cancel and re-render
+                    }
+                });
+                
+                input.addEventListener('blur', saveNote);
+            }
+            
+            updatePagination(totalItems = null) {
+                const itemCount = totalItems || this.filteredOperations.length;
+                const totalPages = Math.ceil(itemCount / this.itemsPerPage);
+                
+                if (totalPages <= 1) {
+                    this.elements.pagination.classList.add('hidden');
+                    return;
+                }
+                
+                this.elements.pagination.classList.remove('hidden');
+                
+                // Update prev/next buttons
+                const prevBtn = document.getElementById('prev-page');
+                const nextBtn = document.getElementById('next-page');
+                
+                prevBtn.disabled = this.currentPage === 1;
+                nextBtn.disabled = this.currentPage === totalPages;
+                
+                // Generate page numbers
+                const pageNumbers = document.getElementById('page-numbers');
+                pageNumbers.innerHTML = '';
+                
+                for (let i = 1; i <= Math.min(totalPages, 5); i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
+                    pageBtn.textContent = i;
+                    pageBtn.addEventListener('click', () => this.goToPage(i));
+                    pageNumbers.appendChild(pageBtn);
+                }
+                
+                // Bind prev/next events
+                prevBtn.onclick = () => this.goToPage(this.currentPage - 1);
+                nextBtn.onclick = () => this.goToPage(this.currentPage + 1);
+            }
+            
+            goToPage(page) {
+                this.currentPage = page;
+                this.renderTable();
+            }
+            
+            showLoading(show) {
+                if (show) {
+                    this.elements.loadingState.classList.remove('hidden');
+                    this.elements.emptyState.classList.add('hidden');
+                } else {
+                    this.elements.loadingState.classList.add('hidden');
+                }
+            }
+        }
+        
+        // Global reference for onclick functions
+        let historyManager;
+        
+        // Navigation event listeners
+        document.getElementById('nav-back-history').addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+        
+        function main() {
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    
+                    // Initialize History Manager
+                    historyManager = new HistoryManager();
+                    await historyManager.initialize();
+                    
+                    // Initialize Lucide icons
+                    lucide.createIcons();
+                    
+                    // Hide loader and show content
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('app-content').classList.remove('hidden');
+                } else {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        }
+        
+        main();
+    </script>
+</body>
+</html>

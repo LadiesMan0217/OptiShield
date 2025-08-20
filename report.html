@@ -18,53 +18,1070 @@
             --bg: #09090b; --fg: #f4f4f5; --fg-secondary: #a1a1aa; --accent: #3b82f6; --danger: #ef4444; --warning: #f59e0b; --success: #16a34a; --card-bg: #18181b; --card-border: #27272a; --input-bg: #27272a; --input-border: #3f3f46;
         }
         [data-theme="light"] { --bg: #f4f4f5; --fg: #18181b; --fg-secondary: #71717a; --card-bg: #ffffff; --card-border: #e4e4e7; --input-bg: #e4e4e7; --input-border: #d4d4d8; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--fg); transition: background-color 0.3s, color 0.3s; padding: 0; margin: 0; padding-bottom: 80px; }
         .card { background-color: var(--card-bg); border: 1px solid var(--card-border); }
         
         .hidden-balance-value { display: none; }
         body[data-hide-balance="true"] .balance-value { display: none; }
         body[data-hide-balance="true"] .hidden-balance-value { display: inline; }
 
-        .details-row { display: none; }
-        .summary-row.expanded + .details-row { display: table-row; }
-        .report-view-btn.active, .currency-btn.active { background-color: var(--card-bg); color: var(--fg); box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); }
+        /* Mobile-first KPIs Header */
+        .kpis-header {
+            background: linear-gradient(135deg, var(--card-bg) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+        
+        .kpi-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--fg-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .kpi-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        /* Mobile KPI Responsiveness */
+        @media (max-width: 480px) {
+            .kpi-card {
+                padding: 0.75rem 0.5rem;
+                min-height: 70px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+            
+            .kpi-label {
+                font-size: 0.65rem;
+                margin-bottom: 0.125rem;
+                line-height: 1.1;
+            }
+            
+            .kpi-value {
+                font-size: 1rem;
+                line-height: 1.1;
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            
+            /* For very long values, allow wrapping */
+            .kpi-value.long-value {
+                white-space: normal;
+                font-size: 0.9rem;
+                line-height: 1.0;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .kpi-value {
+                font-size: 0.95rem;
+            }
+            
+            .kpi-value.long-value {
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* Initial Balance Section */
+        .initial-balance-section {
+            padding: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            background: var(--card-bg);
+        }
+        
+        .initial-balance-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .initial-balance-label {
+            color: var(--fg-secondary);
+        }
+        
+        .initial-balance-value {
+            color: #22c55e; /* green-500 - verde claro com bom contraste */
+            font-weight: 700;
+        }
+        
+        .edit-balance-btn {
+            background: none;
+            border: none;
+            color: var(--fg-secondary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .edit-balance-btn:hover {
+            background: var(--input-bg);
+            color: var(--accent);
+        }
+        
+        .initial-balance-edit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .balance-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            width: 120px;
+            font-size: 0.9rem;
+        }
+        
+        .currency-select {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+        
+        .save-balance-btn, .cancel-balance-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .save-balance-btn {
+            color: var(--success);
+        }
+        
+        .save-balance-btn:hover {
+            background: rgba(22, 163, 74, 0.1);
+        }
+        
+        .cancel-balance-btn {
+            color: var(--danger);
+        }
+        
+        .cancel-balance-btn:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        /* Operations List */
+        .operations-list {
+            padding: 0 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        /* Desktop Operations List Enhancement */
+        @media (min-width: 768px) {
+            .operations-list {
+                background: rgba(255, 255, 255, 0.02);
+                border: 1px solid var(--card-border);
+                border-radius: 16px;
+                padding: 1.5rem;
+                margin: 2rem 1rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+            
+            .operations-header {
+                margin-bottom: 1.5rem;
+            }
+            
+            #operations-container {
+                background: var(--bg);
+                border-radius: 12px;
+                padding: 1rem;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+        }
+        
+        /* Filter Panel Styles */
+        .filter-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--fg-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-toggle-btn:hover {
+            background: var(--input-bg);
+            color: var(--accent);
+        }
+        
+        .filter-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            animation: slideDown 0.2s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .filter-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        @media (min-width: 640px) {
+            .filter-controls {
+                flex-direction: row;
+                align-items: center;
+            }
+        }
+        
+        .search-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            flex: 1;
+            font-size: 0.9rem;
+        }
+        
+        .result-filter {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            min-width: 150px;
+        }
+        
+        .clear-filters-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #dc2626;
+        }
+        
+        /* Advanced Filter Styles */
+        .filter-row {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .date-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-label {
+            color: var(--fg-muted);
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .date-input {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            min-width: 130px;
+        }
+        
+        .date-separator {
+            color: var(--fg-muted);
+            font-size: 0.85rem;
+            margin: 0 0.25rem;
+        }
+        
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .sort-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg-muted);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            transition: all 0.2s ease;
+        }
+        
+        .sort-btn:hover {
+            background: var(--card-hover);
+            color: var(--fg);
+        }
+        
+        .sort-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .filter-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+        
+        /* Tablet styles */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            .filter-row {
+                gap: 1rem;
+            }
+            .card {
+                padding: 1.25rem;
+            }
+            .operation-item {
+                padding: 1rem;
+            }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 768px) {
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+            
+            .date-filter-group,
+            .sort-controls {
+                justify-content: center;
+            }
+            
+            .search-input {
+                margin-bottom: 0.5rem;
+            }
+            
+            /* Improved mobile layout */
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .operation-item {
+                padding: 0.75rem;
+            }
+            
+            /* Bottom navigation improvements */
+            nav .nav-btn { padding: 0.5rem 0.25rem; min-height: 3.5rem; }
+            nav .nav-btn span { font-size: 0.7rem; }
+            nav .nav-btn i { width: 1.25rem; height: 1.25rem; }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .card {
+                padding: 0.75rem;
+            }
+            .operation-item {
+                padding: 0.5rem;
+            }
+            .filter-row {
+                gap: 0.5rem;
+            }
+        }
+        
+        /* Bottom navigation enhancements */
+        nav .nav-btn {
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.5rem;
+            margin: 0 0.125rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        nav .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        nav .nav-btn:hover::before {
+            left: 100%;
+        }
+        
+        nav .nav-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        nav .nav-btn.text-blue-500 {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #3b82f6 !important;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Enhanced interactions */
+        .filter-btn:active,
+        .btn:active,
+        .load-more-btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Smooth loading states */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--card-border);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Load More Button */
+        .load-more-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--accent);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 1rem auto;
+            display: block;
+            transition: all 0.2s ease;
+        }
+        
+        .load-more-btn:hover {
+            background: var(--input-bg);
+            transform: translateY(-1px);
+        }
+        
+        .operation-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+        
+        .operation-summary {
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .operation-date {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .operation-score {
+            font-size: 0.8rem;
+            color: var(--fg-secondary);
+        }
+        
+        .operation-result {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        
+        .operation-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid var(--card-border);
+        }
+        
+        .operation-item.expanded .operation-details {
+            max-height: 500px;
+        }
+        
+        /* Carousel Widgets */
+        .widgets-carousel {
+            padding: 1rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        
+        .widgets-carousel::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .widgets-container {
+            display: flex;
+            gap: 1rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        .widget-card {
+            min-width: 280px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.25rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .widget-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--fg);
+        }
+        
+        /* Settings Modal */
+        .settings-modal {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            border-radius: 20px 20px 0 0;
+            padding: 1.5rem;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 50;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .settings-modal.open {
+            transform: translateY(0);
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        
+        .modal-backdrop.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .settings-gear {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .settings-gear:hover {
+            transform: rotate(90deg);
+        }
+        
+        /* Responsive adjustments */
+        @media (min-width: 640px) {
+            .kpis-header {
+                padding: 1.5rem;
+            }
+            
+            .kpi-value {
+                font-size: 1.5rem;
+            }
+            
+            .operations-list {
+                padding: 0 1.5rem;
+            }
+            
+            .widget-card {
+                min-width: 320px;
+            }
+        }
         
         #loader { display: flex; justify-content: center; align-items: center; height: 80vh; transition: opacity 0.3s ease-out; }
         .spinner { width: 48px; height: 48px; border: 3px solid var(--card-border); border-bottom-color: var(--fg); border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Desktop Two-Column Layout */
+        @media (min-width: 1024px) {
+            #app-content {
+                display: flex;
+                flex-direction: column;
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 0 2rem;
+            }
+            
+            .kpis-header {
+                margin-bottom: 2rem;
+            }
+            
+            .initial-balance-section {
+                margin-bottom: 2rem;
+            }
+            
+            .desktop-dashboard {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 2rem;
+                align-items: start;
+            }
+            
+            .left-column {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            .right-column {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+            }
+            
+            /* Visual Analysis Section - Desktop */
+            .widgets-carousel {
+                padding: 0;
+                overflow: visible;
+            }
+            
+            .widgets-container {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                padding: 0;
+            }
+            
+            .widget-card {
+                min-width: auto;
+                width: 100%;
+            }
+            
+            /* Operations List - Desktop */
+            .operations-list {
+                margin: 0;
+                padding: 0;
+            }
+            
+            /* Performance Chart - Desktop */
+            .performance-section {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* Additional Metrics - Desktop */
+            .additional-metrics-section {
+                background: var(--card-bg);
+                border: 1px solid var(--card-border);
+                border-radius: 16px;
+                padding: 1.5rem;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        /* Footer Styles */
+        .app-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--fg-secondary);
+            z-index: 30;
+            backdrop-filter: blur(10px);
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .footer-divider {
+            color: var(--card-border);
+        }
+        
+        @media (max-width: 480px) {
+            .footer-content {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .footer-divider {
+                display: none;
+            }
+        }
 
         @media print {
             body { padding: 0; background-color: white !important; }
-            header, .nav-back, #loader { display: none !important; }
+            .settings-gear, #loader, .app-footer { display: none !important; }
             .card { box-shadow: none !important; border: 1px solid #ccc !important; }
         }
     </style>
 </head>
-<body class="p-4 sm:p-6">
+<body>
     <div id="loader"><div class="spinner"></div></div>
     
-    <div id="app-content" class="max-w-7xl mx-auto hidden">
-        <section id="report-view">
-            <header class="flex justify-between items-center mb-6"><div class="flex items-center"><button id="nav-back-report" class="nav-back p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 mr-2"><i data-lucide="arrow-left"></i></button><div class="flex items-center"><button id="report-prev-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-left"></i></button><h1 id="report-title" class="text-xl sm:text-3xl font-bold text-center w-48 sm:w-64">Relatório Mensal</h1><button id="report-next-month" class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800"><i data-lucide="chevron-right"></i></button></div></div><div class="flex items-center space-x-2"><button id="print-report-btn" class="p-2 rounded-lg bg-zinc-200 dark:bg-zinc-800"><i data-lucide="printer"></i></button></div></header>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-1 space-y-6">
-                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Configurações do Relatório</h2><div class="space-y-4"><div><label class="block text-sm font-medium text-zinc-400 mb-2">Moeda</label><div class="flex space-x-2 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button data-currency="BRL" class="currency-btn w-full py-2 rounded-md font-semibold">Real (BRL)</button><button data-currency="USD" class="currency-btn w-full py-2 rounded-md font-semibold">Dólar (USD)</button></div></div><div id="report-dollar-rate-card" class="hidden"><label class="block text-sm font-medium text-zinc-400">Cotação do Dólar (USD > BRL)</label><p id="report-dollar-rate" class="font-bold text-lg"></p></div></div></div>
-                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Resumo do Mês</h2><div class="space-y-3"><div class="flex justify-between items-center"><span class="text-zinc-400">Resultado Líquido</span><span id="report-net-profit" class="font-bold text-lg"></span></div><div class="flex justify-between items-center"><span class="text-zinc-400">Assertividade</span><span id="report-win-rate" class="font-bold text-lg"></span></div><hr class="border-zinc-200 dark:border-zinc-700"><div class="flex justify-between items-center"><span class="text-zinc-400">Saldo Inicial do Mês</span><div class="flex items-center"><input type="number" id="report-initial-balance" class="w-28 text-right bg-transparent font-bold text-lg outline-none"><i data-lucide="edit-2" class="w-4 h-4 ml-2 text-zinc-500"></i></div></div><div class="flex justify-between items-center"><span class="text-zinc-400">Saldo Final</span><span id="report-final-balance" class="font-bold text-lg"></span></div></div></div>
-                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Métricas Adicionais</h2><div class="grid grid-cols-2 gap-4 text-center"><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Maior Win</p><p id="report-max-win" class="font-bold text-green-500"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Maior Loss</p><p id="report-max-loss" class="font-bold text-red-500"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Média / Op.</p><p id="report-avg-trade" class="font-bold"></p></div><div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg"><p class="text-sm text-zinc-400">Dias Operados</p><p id="report-days-traded" class="font-bold"></p></div></div></div>
+    <!-- Settings Gear Icon -->
+    <button id="settings-gear" class="settings-gear">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+    </button>
+    
+    <!-- Modal Backdrop -->
+    <div id="modal-backdrop" class="modal-backdrop"></div>
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Configurações</h3>
+            <button id="close-settings" class="p-2 rounded-full hover:bg-zinc-700">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-zinc-400 mb-2">Moeda</label>
+                <div class="flex space-x-2 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg">
+                    <button data-currency="BRL" class="currency-btn w-full py-2 rounded-md font-semibold">Real (BRL)</button>
+                    <button data-currency="USD" class="currency-btn w-full py-2 rounded-md font-semibold">Dólar (USD)</button>
                 </div>
-                <div class="lg:col-span-2 space-y-6">
-                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Evolução do Saldo</h2><div class="h-60"><canvas id="report-line-chart"></canvas></div></div>
-                    <div class="card p-6 rounded-2xl shadow-lg"><h2 class="text-xl font-bold mb-4">Desempenho</h2><div class="h-60"><canvas id="report-pie-chart"></canvas></div></div>
-                    <div class="card p-6 rounded-2xl shadow-lg">
-                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4"><h2 class="text-xl font-bold">Histórico de Operações</h2><div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg"><button id="view-daily" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold active">Diário</button><button id="view-full" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold">Completo</button></div></div>
-                        <div class="overflow-x-auto max-h-[40rem]"><table class="w-full text-sm text-left"><thead class="text-xs text-zinc-400 uppercase sticky top-0 bg-zinc-50 dark:bg-zinc-800"><tr id="report-table-header"></tr></thead><tbody id="report-table-body"></tbody></table></div>
+            </div>
+            
+            <div id="report-dollar-rate-card" class="hidden">
+                <label class="block text-sm font-medium text-zinc-400">Cotação do Dólar (USD > BRL)</label>
+                <p id="report-dollar-rate" class="font-bold text-lg"></p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-zinc-400 mb-2">Saldo Inicial do Mês</label>
+                <div class="flex items-center">
+                    <input type="number" id="report-initial-balance" class="w-full p-3 bg-zinc-200 dark:bg-zinc-800 rounded-lg font-bold text-lg outline-none">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="app-content" class="hidden">
+        <!-- Mobile KPIs Header -->
+        <div class="kpis-header">
+            <div class="flex justify-between items-center mb-4">
+                <button id="nav-back-report" class="p-2 rounded-full hover:bg-zinc-700">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <div class="flex items-center">
+                    <button id="report-prev-month" class="p-2 rounded-full hover:bg-zinc-700">
+                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <h1 id="report-title" class="text-lg font-bold mx-4 min-w-[160px] text-center">Relatório Mensal</h1>
+                    <button id="report-next-month" class="p-2 rounded-full hover:bg-zinc-700">
+                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <button id="print-report-btn" class="p-2 rounded-full hover:bg-zinc-700">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div class="kpi-card">
+                    <div class="kpi-label">Resultado Líquido</div>
+                    <div id="report-net-profit" class="kpi-value">R$ 0,00</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Assertividade</div>
+                    <div id="report-win-rate" class="kpi-value">0.0%</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Saldo Final</div>
+                    <div id="report-final-balance" class="kpi-value">R$ 0,00</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Initial Balance Display -->
+        <div class="initial-balance-section">
+            <div class="initial-balance-display" id="initial-balance-display">
+                <span class="initial-balance-label">Saldo Inicial:</span>
+                <span class="initial-balance-value" id="initial-balance-value">R$ 0,00</span>
+                <button class="edit-balance-btn" id="edit-balance-btn" title="Editar saldo inicial">
+                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="initial-balance-edit hidden" id="initial-balance-edit">
+                <input type="number" id="edit-initial-balance" step="0.01" placeholder="0.00" class="balance-input">
+                <select id="edit-currency" class="currency-select">
+                    <option value="BRL">R$</option>
+                    <option value="USD">$</option>
+                </select>
+                <button class="save-balance-btn" id="save-balance-btn">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                </button>
+                <button class="cancel-balance-btn" id="cancel-balance-btn">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Desktop Dashboard Layout -->
+        <div class="desktop-dashboard">
+            <!-- Left Column: Visual Analysis + Performance -->
+            <div class="left-column">
+                <!-- Visual Analysis Section -->
+                <div class="widgets-carousel">
+                    <h2 class="text-xl font-bold mb-4 px-0 text-center">Análise Visual</h2>
+                    <div class="widgets-container">
+                        <!-- Balance Evolution Chart -->
+                        <div class="widget-card">
+                            <h3 class="widget-title">Evolução do Saldo</h3>
+                            <div class="h-48">
+                                <canvas id="report-line-chart"></canvas>
+                            </div>
+                            <div class="mt-3 flex gap-2 flex-wrap">
+                                <button id="toggle-trend" class="text-sm px-3 py-1 bg-zinc-700 rounded-md hover:bg-zinc-600">
+                                    <i data-lucide="trending-up" class="w-4 h-4 inline mr-1"></i>
+                                    Linha de Tendência
+                                </button>
+                                <button id="toggle-legend" class="text-sm px-3 py-1 bg-zinc-700 rounded-md hover:bg-zinc-600">
+                                    <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+                                    Legendas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Performance Section -->
+                <div class="performance-section">
+                    <h3 class="widget-title">Desempenho</h3>
+                    <div class="h-48">
+                        <canvas id="report-pie-chart"></canvas>
                     </div>
                 </div>
             </div>
-        </section>
-        <footer class="mt-8 text-center text-xs text-zinc-400">
+            
+            <!-- Right Column: Operations History + Additional Metrics -->
+            <div class="right-column">
+                <!-- Operations History -->
+                <div class="operations-list">
+                    <div class="operations-header">
+                        <div class="flex justify-between items-center mb-4 mt-6">
+                            <h2 class="text-xl font-bold">Histórico de Operações</h2>
+                            <div class="flex items-center gap-2">
+                                <button id="filter-toggle" class="filter-toggle-btn" title="Filtrar operações">
+                                    <i data-lucide="search" class="w-4 h-4"></i>
+                                </button>
+                                <div class="flex space-x-1 p-1 bg-zinc-200 dark:bg-zinc-800 rounded-lg">
+                                    <button id="view-daily" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold bg-zinc-700 text-white">Diário</button>
+                                    <button id="view-full" class="report-view-btn px-3 py-1 text-sm rounded-md font-semibold">Completo</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Panel -->
+                        <div id="filter-panel" class="filter-panel hidden">
+                            <div class="filter-controls">
+                                <div class="filter-row">
+                                    <input type="text" id="search-input" placeholder="Buscar por data ou valor..." class="search-input">
+                                    <select id="result-filter" class="result-filter">
+                                        <option value="all">Todos os resultados</option>
+                                        <option value="positive">Apenas positivos</option>
+                                        <option value="negative">Apenas negativos</option>
+                                    </select>
+                                </div>
+                                <div class="filter-row">
+                                    <div class="date-filter-group">
+                                        <label class="filter-label">Período:</label>
+                                        <input type="date" id="date-from" class="date-input" title="Data inicial">
+                                        <span class="date-separator">até</span>
+                                        <input type="date" id="date-to" class="date-input" title="Data final">
+                                    </div>
+                                    <div class="sort-controls">
+                                        <label class="filter-label">Ordenar:</label>
+                                        <button id="sort-desc" class="sort-btn active" title="Mais recentes primeiro">
+                                            <i data-lucide="arrow-down" class="w-4 h-4"></i>
+                                            Recentes
+                                        </button>
+                                        <button id="sort-asc" class="sort-btn" title="Mais antigas primeiro">
+                                            <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                                            Antigas
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="filter-actions">
+                                    <button id="clear-filters" class="clear-filters-btn">Limpar Filtros</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="operations-container">
+                        <!-- Operations will be dynamically inserted here -->
+                    </div>
+                    
+                    <button id="load-more-btn" class="load-more-btn hidden">
+                        Ver Mais Operações
+                    </button>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="historico.html" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200">
+                            <i data-lucide="history" class="w-4 h-4 mr-2"></i>
+                            Ver Histórico Completo
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Additional Metrics Section -->
+                <div class="additional-metrics-section">
+                    <h3 class="widget-title">Métricas Adicionais</h3>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg text-center">
+                            <p class="text-xs text-zinc-400 mb-1">Maior Win</p>
+                            <p id="report-max-win" class="font-bold text-green-500">R$ 0,00</p>
+                        </div>
+                        <div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg text-center">
+                            <p class="text-xs text-zinc-400 mb-1">Maior Loss</p>
+                            <p id="report-max-loss" class="font-bold text-red-500">R$ 0,00</p>
+                        </div>
+                        <div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg text-center">
+                            <p class="text-xs text-zinc-400 mb-1">Média / Op.</p>
+                            <p id="report-avg-trade" class="font-bold">R$ 0,00</p>
+                        </div>
+                        <div class="bg-zinc-100 dark:bg-zinc-800 p-3 rounded-lg text-center">
+                            <p class="text-xs text-zinc-400 mb-1">Dias Operados</p>
+                            <p id="report-days-traded" class="font-bold">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="mt-8 mb-4 text-center text-xs text-zinc-400 px-4">
             <p>© Todos os direitos reservados a Caio Rodrigues – Desenvolvido por Caio Rodrigues</p>
         </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-backdrop" class="modal-backdrop">
+        <div id="settings-modal" class="settings-modal">
+            <div class="modal-header">
+                <h3>Configurações do Relatório</h3>
+                <button id="close-settings" class="close-btn">×</button>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label for="modal-initial-balance">Saldo Inicial do Mês</label>
+                    <input type="number" id="modal-initial-balance" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label for="modal-currency">Moeda</label>
+                    <select id="modal-currency">
+                        <option value="BRL">Real (R$)</option>
+                        <option value="USD">Dólar ($)</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button id="save-settings" class="save-btn">Salvar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -91,6 +1108,17 @@
         let reportViewMode = 'daily';
         let userSettings = {};
         let userId = null;
+        let allTrades = [];
+        let filteredTrades = [];
+        let displayedTradesCount = 0;
+        const TRADES_PER_PAGE = 7;
+        let currentFilters = {
+            search: '',
+            result: 'all',
+            dateFrom: '',
+            dateTo: '',
+            sortOrder: 'desc'
+        };
 
         async function fetchDollarRate() { try { const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD'); if (!response.ok) throw new Error('API request failed'); const data = await response.json(); return data.rates.BRL; } catch (error) { console.error("Failed to fetch dollar rate:", error); return null; } }
         function formatCurrency(value, currency) { const options = { style: 'currency', currency: currency || userSettings.currency }; const locale = (currency || userSettings.currency) === 'BRL' ? 'pt-BR' : 'en-US'; return new Intl.NumberFormat(locale, options).format(value || 0); }
@@ -120,16 +1148,62 @@
             const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
             const q = query(tradesColRef, where("date", ">=", startOfMonth.toISOString().split('T')[0]), where("date", "<=", endOfMonth.toISOString().split('T')[0]));
             const querySnapshot = await getDocs(q);
-            const trades = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a, b) => a.createdAt.seconds - b.createdAt.seconds);
+            allTrades = querySnapshot.docs.map(doc => ({id: doc.id, ...doc.data()})).sort((a, b) => b.createdAt.seconds - a.createdAt.seconds); // Ordenação decrescente
+            
+            // Update initial balance display
+            updateInitialBalanceDisplay(monthlyInitialBalance);
+            
+            // Apply current filters
+            applyFilters();
+            const trades = filteredTrades;
 
             const netProfit = trades.reduce((acc, t) => acc + t.profit, 0);
             const wins = trades.filter(t => t.result === 'win').length;
             const winRate = trades.length > 0 ? (wins / trades.length * 100).toFixed(1) : "0.0";
             const finalBalance = monthlyInitialBalance + netProfit;
             
+            // Update KPI values
             document.getElementById('report-net-profit').textContent = formatCurrencyWithHiding(netProfit);
             document.getElementById('report-win-rate').textContent = `${winRate}%`;
             document.getElementById('report-final-balance').textContent = formatCurrencyWithHiding(finalBalance);
+            
+            // Apply conditional colors to KPIs
+            const netProfitElement = document.getElementById('report-net-profit');
+            const winRateElement = document.getElementById('report-win-rate');
+            const finalBalanceElement = document.getElementById('report-final-balance');
+            
+            // Function to check if value is long and apply appropriate class
+            function applyLongValueClass(element) {
+                const text = element.textContent;
+                // Consider long if more than 10 characters or contains large numbers
+                if (text.length > 10 || /\d{6,}/.test(text.replace(/[^\d]/g, ''))) {
+                    element.classList.add('long-value');
+                } else {
+                    element.classList.remove('long-value');
+                }
+            }
+            
+            // Apply long-value class detection to all KPI elements
+            applyLongValueClass(netProfitElement);
+            applyLongValueClass(winRateElement);
+            applyLongValueClass(finalBalanceElement);
+            
+            // Resultado Líquido: verde para positivo, vermelho para negativo
+            if (netProfit >= 0) {
+                netProfitElement.style.color = '#10b981'; // green-500
+            } else {
+                netProfitElement.style.color = '#ef4444'; // red-500
+            }
+            
+            // Assertividade: vermelho <50%, amarelo 50-59.9%, verde >=60%
+            const winRateValue = parseFloat(winRate);
+            if (winRateValue < 50) {
+                winRateElement.style.color = '#ef4444'; // red-500
+            } else if (winRateValue < 60) {
+                winRateElement.style.color = '#eab308'; // yellow-500
+            } else {
+                winRateElement.style.color = '#10b981'; // green-500
+            }
 
             const maxWin = Math.max(0, ...trades.filter(t=>t.result ==='win').map(t => t.profit));
             const maxLoss = Math.min(0, ...trades.filter(t=>t.result ==='loss').map(t => t.profit));
@@ -142,76 +1216,249 @@
             renderCharts(trades, monthlyInitialBalance);
         }
 
-        function renderReportTable(trades, initialBalance) {
-            const tableHeader = document.getElementById('report-table-header');
-            const tableBody = document.getElementById('report-table-body');
-            tableBody.innerHTML = '';
+        function renderReportTable(trades, initialBalance, append = false) {
+            const operationsContainer = document.getElementById('operations-container');
+            if (!append) {
+                operationsContainer.innerHTML = '';
+                displayedTradesCount = 0;
+            }
 
             if (reportViewMode === 'daily') {
-                tableHeader.innerHTML = `<th scope="col" class="px-4 py-3">Data</th><th scope="col" class="px-4 py-3">Placar</th><th scope="col" class="px-4 py-3">Assertividade</th><th scope="col" class="px-4 py-3">Resultado</th>`;
                 const tradesByDay = trades.reduce((acc, trade) => { (acc[trade.date] = acc[trade.date] || []).push(trade); return acc; }, {});
+                const sortedDates = Object.keys(tradesByDay).sort().reverse(); // Ordenação decrescente por data
+                const datesToShow = append ? 
+                    sortedDates.slice(displayedTradesCount, displayedTradesCount + TRADES_PER_PAGE) : 
+                    sortedDates.slice(0, TRADES_PER_PAGE);
 
-                Object.keys(tradesByDay).sort().forEach(date => {
+                datesToShow.forEach(date => {
                     const dayTrades = tradesByDay[date];
                     const dayWins = dayTrades.filter(t => t.result === 'win').length;
                     const dayLosses = dayTrades.length - dayWins;
                     const dayProfit = dayTrades.reduce((sum, t) => sum + t.profit, 0);
                     const dayWinRate = (dayWins / dayTrades.length * 100).toFixed(1);
-
-                    const summaryRow = document.createElement('tr');
-                    summaryRow.className = 'summary-row border-b border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer';
-                    summaryRow.dataset.date = date;
-                    summaryRow.innerHTML = `<td class="px-4 py-3 font-semibold">${new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</td><td class="px-4 py-3">${dayWins} x ${dayLosses}</td><td class="px-4 py-3">${dayWinRate}%</td><td class="px-4 py-3 font-bold ${dayProfit >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrencyWithHiding(dayProfit)}</td>`;
-                    
-                    const detailsRow = document.createElement('tr');
-                    detailsRow.className = 'details-row';
                     const note = userSettings.dailyNotes[date] || '';
-                    detailsRow.innerHTML = `
-                        <td colspan="4" class="p-4 bg-zinc-50 dark:bg-zinc-800/50">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div><h4 class="font-bold mb-2">Operações do Dia</h4><div class="space-y-1 text-xs">${dayTrades.map(t => `<div class="flex justify-between"><span>${t.result.toUpperCase()} ${formatCurrencyWithHiding(t.value)}</span><span class="${t.profit >= 0 ? 'text-green-500' : 'text-red-500'}">${t.profit > 0 ? '+' : ''}${formatCurrencyWithHiding(t.profit)}</span></div>`).join('')}</div></div>
-                                <div><h4 class="font-bold mb-2">Diário e Anotações</h4><textarea class="daily-note-textarea w-full h-24 p-2 text-sm bg-zinc-100 dark:bg-zinc-700 rounded-md" data-date="${date}" placeholder="Anotações sobre o dia...">${note}</textarea></div>
+
+                    const operationItem = document.createElement('div');
+                    operationItem.className = 'operation-item';
+                    operationItem.innerHTML = `
+                        <div class="operation-summary" onclick="toggleOperationDetails('${date}')">
+                            <div>
+                                <div class="operation-date">${new Date(date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</div>
+                                <div class="operation-score">${dayWins}W / ${dayLosses}L (${dayWinRate}%)</div>
                             </div>
-                        </td>`;
+                            <div class="operation-result ${dayProfit >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrencyWithHiding(dayProfit)}</div>
+                        </div>
+                        <div class="operation-details" id="details-${date}">
+                            <div class="p-4">
+                                <h4 class="font-bold mb-2">Operações do Dia</h4>
+                                <div class="space-y-2 mb-4">
+                                    ${dayTrades.map(trade => `
+                                        <div class="flex justify-between items-center p-2 bg-zinc-100 dark:bg-zinc-800 rounded">
+                                            <div>
+                                                <span class="font-medium">${trade.result.toUpperCase()}</span>
+                                                <span class="text-sm text-zinc-500 ml-2">${formatCurrencyWithHiding(trade.value)}</span>
+                                            </div>
+                                            <span class="font-bold ${trade.profit >= 0 ? 'text-green-500' : 'text-red-500'}">
+                                                ${trade.profit > 0 ? '+' : ''}${formatCurrencyWithHiding(trade.profit)}
+                                            </span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold mb-2">Diário e Anotações</h4>
+                                    <textarea 
+                                        class="daily-note-textarea w-full h-24 p-2 text-sm bg-zinc-100 dark:bg-zinc-700 rounded-md" 
+                                        data-date="${date}" 
+                                        placeholder="Anotações sobre o dia..."
+                                    >${note}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                     
-                    tableBody.appendChild(summaryRow);
-                    tableBody.appendChild(detailsRow);
+                    operationsContainer.appendChild(operationItem);
                 });
+                
+                displayedTradesCount += datesToShow.length;
+                updateLoadMoreButton(sortedDates.length);
             } else { // 'full' view
-                tableHeader.innerHTML = `<th scope="col" class="px-4 py-3">Data</th><th scope="col" class="px-4 py-3">Resultado</th><th scope="col" class="px-4 py-3">Valor</th><th scope="col" class="px-4 py-3">Lucro/Prej.</th><th scope="col" class="px-4 py-3">Saldo Acum.</th>`;
+                const tradesToShow = append ? 
+                    trades.slice(displayedTradesCount, displayedTradesCount + TRADES_PER_PAGE) : 
+                    trades.slice(0, TRADES_PER_PAGE);
                 let cumulativeBalance = initialBalance;
-                trades.forEach(trade => {
+                if (append) {
+                    // Calculate cumulative balance up to the displayed trades
+                    for (let i = 0; i < displayedTradesCount; i++) {
+                        cumulativeBalance += trades[i].profit;
+                    }
+                }
+                
+                tradesToShow.forEach(trade => {
                     cumulativeBalance += trade.profit;
-                    const row = document.createElement('tr');
-                    row.className = 'border-b border-zinc-200 dark:border-zinc-700';
-                    row.innerHTML = `<td class="px-4 py-2">${new Date(trade.date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</td><td class="px-4 py-2 font-bold ${trade.result === 'win' ? 'text-green-500' : 'text-red-500'}">${trade.result.toUpperCase()}</td><td class="px-4 py-2">${formatCurrencyWithHiding(trade.value)}</td><td class="px-4 py-2">${formatCurrencyWithHiding(trade.profit)}</td><td class="px-4 py-2">${formatCurrencyWithHiding(cumulativeBalance)}</td>`;
-                    tableBody.appendChild(row);
+                    const operationItem = document.createElement('div');
+                    operationItem.className = 'operation-item';
+                    operationItem.innerHTML = `
+                        <div class="operation-summary">
+                            <div>
+                                <div class="operation-date">${new Date(trade.date + 'T00:00:00').toLocaleDateString('pt-BR', {day: '2-digit', month: '2-digit'})}</div>
+                                <div class="operation-score ${trade.result === 'win' ? 'text-green-500' : 'text-red-500'}">${trade.result.toUpperCase()}</div>
+                            </div>
+                            <div class="operation-result">${formatCurrencyWithHiding(cumulativeBalance)}</div>
+                        </div>
+                    `;
+                    operationsContainer.appendChild(operationItem);
                 });
+                
+                displayedTradesCount += tradesToShow.length;
+                updateLoadMoreButton(trades.length);
             }
         }
 
+        let showTrendLine = false;
+        let showLegend = true;
+        
         function renderCharts(trades, initialBalance){
             const wins = trades.filter(t => t.result === 'win').length;
             const chartData = {
-                labels: trades.map((trade, index) => index + 1),
+                labels: trades.map((trade, index) => `Dia ${index + 1}`),
                 balance: trades.reduce((acc, trade) => [...acc, (acc.length > 0 ? acc[acc.length - 1] : initialBalance) + trade.profit], [initialBalance])
             };
             
+            // Calculate trend line data
+            const trendData = [];
+            if (showTrendLine && chartData.balance.length > 1) {
+                const balanceData = chartData.balance.slice(1);
+                const n = balanceData.length;
+                const sumX = (n * (n + 1)) / 2;
+                const sumY = balanceData.reduce((a, b) => a + b, 0);
+                const sumXY = balanceData.reduce((sum, y, i) => sum + (i + 1) * y, 0);
+                const sumX2 = (n * (n + 1) * (2 * n + 1)) / 6;
+                
+                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                const intercept = (sumY - slope * sumX) / n;
+                
+                for (let i = 1; i <= n; i++) {
+                    trendData.push(slope * i + intercept);
+                }
+            }
+            
+            const datasets = [{
+                label: 'Saldo',
+                data: chartData.balance.slice(1),
+                borderColor: '#3b82f6',
+                tension: 0.1,
+                fill: false
+            }];
+            
+            if (showTrendLine && trendData.length > 0) {
+                datasets.push({
+                    label: 'Linha de Tendência',
+                    data: trendData,
+                    borderColor: '#f59e0b',
+                    borderDash: [5, 5],
+                    tension: 0,
+                    fill: false,
+                    pointRadius: 0
+                });
+            }
+            
             const chartOptions = {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') } } },
-                scales: { x: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } }, y: { ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } } }
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { 
+                     legend: { 
+                         labels: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') },
+                         display: showLegend
+                     } 
+                 },
+                scales: { 
+                    x: { 
+                        title: {
+                            display: true,
+                            text: 'Dias',
+                            color: getComputedStyle(document.body).getPropertyValue('--fg-secondary')
+                        },
+                        ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, 
+                        grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } 
+                    }, 
+                    y: { 
+                        title: {
+                            display: true,
+                            text: 'Saldo',
+                            color: getComputedStyle(document.body).getPropertyValue('--fg-secondary')
+                        },
+                        ticks: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') }, 
+                        grid: { color: getComputedStyle(document.body).getPropertyValue('--card-border') } 
+                    } 
+                }
             };
 
             if(reportChartInstances.line) reportChartInstances.line.destroy();
-            reportChartInstances.line = new Chart(document.getElementById('report-line-chart'), { type: 'line', data: { labels: chartData.labels, datasets: [{ label: 'Evolução do Saldo', data: chartData.balance.slice(1), borderColor: '#3b82f6', tension: 0.1, fill: false }] }, options: chartOptions });
+            reportChartInstances.line = new Chart(document.getElementById('report-line-chart'), { 
+                type: 'line', 
+                data: { 
+                    labels: chartData.labels, 
+                    datasets: datasets 
+                }, 
+                options: chartOptions 
+            });
 
             if(reportChartInstances.pie) reportChartInstances.pie.destroy();
             reportChartInstances.pie = new Chart(document.getElementById('report-pie-chart'), { type: 'doughnut', data: { labels: ['Wins', 'Losses'], datasets: [{ data: [wins, trades.length - wins], backgroundColor: ['#16a34a', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: getComputedStyle(document.body).getPropertyValue('--fg-secondary') } } } } });
         }
 
+        // Mobile-specific functions
+        function toggleOperationDetails(date) {
+            const operationItem = document.querySelector(`[onclick="toggleOperationDetails('${date}')"]`).closest('.operation-item');
+            operationItem.classList.toggle('expanded');
+        }
+
+        async function saveDailyNotes(date) {
+            const textarea = document.querySelector(`textarea[data-date="${date}"]`);
+            userSettings.dailyNotes[date] = textarea.value;
+            await setDoc(doc(db, "users", userId), { dailyNotes: userSettings.dailyNotes }, { merge: true });
+        }
+
+        function openSettingsModal() {
+             const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+             const currentBalance = userSettings.monthlyBalances[monthKey] || 0;
+             
+             document.getElementById('modal-initial-balance').value = currentBalance.toFixed(2);
+             document.getElementById('modal-currency').value = userSettings.currency;
+             
+             document.getElementById('modal-backdrop').classList.add('open');
+             document.getElementById('settings-modal').classList.add('open');
+             document.body.style.overflow = 'hidden';
+         }
+ 
+         function closeSettingsModal() {
+             document.getElementById('modal-backdrop').classList.remove('open');
+             document.getElementById('settings-modal').classList.remove('open');
+             document.body.style.overflow = '';
+         }
+
+         async function saveSettings() {
+             const newBalance = parseFloat(document.getElementById('modal-initial-balance').value) || 0;
+             const newCurrency = document.getElementById('modal-currency').value;
+             
+             const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+             userSettings.monthlyBalances[monthKey] = newBalance;
+             userSettings.currency = newCurrency;
+             
+             await setDoc(doc(db, "users", userId), { 
+                 monthlyBalances: userSettings.monthlyBalances,
+                 currency: userSettings.currency 
+             }, { merge: true });
+             
+             closeSettingsModal();
+             renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+         }
+
         function initializeEventListeners() {
-            document.getElementById('nav-back-report').addEventListener('click', () => { window.history.back(); });
+            document.getElementById('nav-back-report').addEventListener('click', () => { 
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'index.html';
+            });
             document.getElementById('print-report-btn').addEventListener('click', () => window.print());
             
             document.getElementById('report-prev-month').addEventListener('click', () => {
@@ -226,18 +1473,38 @@
             document.querySelectorAll('.report-view-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     reportViewMode = e.currentTarget.id === 'view-daily' ? 'daily' : 'full';
-                    document.querySelectorAll('.report-view-btn').forEach(b => b.classList.remove('active'));
-                    e.currentTarget.classList.add('active');
+                    document.querySelectorAll('.report-view-btn').forEach(b => b.classList.remove('bg-zinc-700', 'text-white'));
+                    e.currentTarget.classList.add('bg-zinc-700', 'text-white');
                     renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
                 });
             });
 
-            document.getElementById('report-table-body').addEventListener('click', (e) => {
-                const summaryRow = e.target.closest('.summary-row');
-                if (summaryRow) summaryRow.classList.toggle('expanded');
+            // Bottom navigation events
+            document.getElementById('nav-dashboard-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'index.html';
+            });
+            document.getElementById('nav-history-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'historico.html';
+            });
+            document.getElementById('nav-settings-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'settings.html';
             });
 
-            document.getElementById('report-table-body').addEventListener('change', async (e) => {
+            // Settings modal events
+             document.getElementById('settings-gear').addEventListener('click', openSettingsModal);
+             document.getElementById('close-settings').addEventListener('click', closeSettingsModal);
+             document.getElementById('save-settings').addEventListener('click', saveSettings);
+             document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+                 if (e.target.id === 'modal-backdrop') {
+                     closeSettingsModal();
+                 }
+             });
+            
+            // Daily notes auto-save
+            document.addEventListener('change', async (e) => {
                 if (e.target.classList.contains('daily-note-textarea')) {
                     const date = e.target.dataset.date;
                     userSettings.dailyNotes[date] = e.target.value;
@@ -259,6 +1526,134 @@
                     renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
                 });
             });
+            
+            // Filter and search event listeners
+            const filterToggle = document.getElementById('filter-toggle');
+            const filterPanel = document.getElementById('filter-panel');
+            const searchInput = document.getElementById('search-input');
+            const resultFilter = document.getElementById('result-filter');
+            const clearFilters = document.getElementById('clear-filters');
+            
+            if (filterToggle) {
+                filterToggle.addEventListener('click', () => {
+                    filterPanel.classList.toggle('hidden');
+                });
+            }
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    currentFilters.search = e.target.value;
+                    applyFilters();
+                });
+            }
+            
+            if (resultFilter) {
+                resultFilter.addEventListener('change', (e) => {
+                    currentFilters.result = e.target.value;
+                    applyFilters();
+                });
+            }
+            
+            if (clearFilters) {
+                 clearFilters.addEventListener('click', () => {
+                     currentFilters.search = '';
+                     currentFilters.result = 'all';
+                     currentFilters.dateFrom = '';
+                     currentFilters.dateTo = '';
+                     currentFilters.sortOrder = 'desc';
+                     searchInput.value = '';
+                     resultFilter.value = 'all';
+                     document.getElementById('date-from').value = '';
+                     document.getElementById('date-to').value = '';
+                     document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+                     document.getElementById('sort-desc').classList.add('active');
+                     applyFilters();
+                 });
+             }
+             
+             // Date filter event listeners
+             const dateFromInput = document.getElementById('date-from');
+             const dateToInput = document.getElementById('date-to');
+             
+             if (dateFromInput) {
+                 dateFromInput.addEventListener('change', (e) => {
+                     currentFilters.dateFrom = e.target.value;
+                     applyFilters();
+                 });
+             }
+             
+             if (dateToInput) {
+                 dateToInput.addEventListener('change', (e) => {
+                     currentFilters.dateTo = e.target.value;
+                     applyFilters();
+                 });
+             }
+             
+             // Sort button event listeners
+             const sortDescBtn = document.getElementById('sort-desc');
+             const sortAscBtn = document.getElementById('sort-asc');
+             
+             if (sortDescBtn) {
+                 sortDescBtn.addEventListener('click', () => {
+                     currentFilters.sortOrder = 'desc';
+                     document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+                     sortDescBtn.classList.add('active');
+                     applyFilters();
+                 });
+             }
+             
+             if (sortAscBtn) {
+                 sortAscBtn.addEventListener('click', () => {
+                     currentFilters.sortOrder = 'asc';
+                     document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+                     sortAscBtn.classList.add('active');
+                     applyFilters();
+                 });
+             }
+             
+             // Load more button event listener
+             const loadMoreBtn = document.getElementById('load-more-btn');
+             if (loadMoreBtn) {
+                 loadMoreBtn.addEventListener('click', loadMoreOperations);
+             }
+             
+             // Trend line toggle
+              const trendToggle = document.getElementById('toggle-trend');
+              if (trendToggle) {
+                  trendToggle.addEventListener('click', () => {
+                      showTrendLine = !showTrendLine;
+                      trendToggle.classList.toggle('bg-blue-600', showTrendLine);
+                      trendToggle.classList.toggle('bg-zinc-700', !showTrendLine);
+                      renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+                  });
+              }
+              
+              // Legend toggle
+              const legendToggle = document.getElementById('toggle-legend');
+              if (legendToggle) {
+                  legendToggle.addEventListener('click', () => {
+                      showLegend = !showLegend;
+                      legendToggle.classList.toggle('bg-blue-600', showLegend);
+                      legendToggle.classList.toggle('bg-zinc-700', !showLegend);
+                      renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+                  });
+              }
+              
+              // Initial balance edit event listeners
+              const editBalanceBtn = document.getElementById('edit-balance-btn');
+              if (editBalanceBtn) {
+                  editBalanceBtn.addEventListener('click', toggleInitialBalanceEdit);
+              }
+              
+              const saveBalanceBtn = document.getElementById('save-balance-btn');
+              if (saveBalanceBtn) {
+                  saveBalanceBtn.addEventListener('click', saveInitialBalance);
+              }
+              
+              const cancelBalanceBtn = document.getElementById('cancel-balance-btn');
+              if (cancelBalanceBtn) {
+                  cancelBalanceBtn.addEventListener('click', toggleInitialBalanceEdit);
+              }
         }
 
         function main() {
@@ -283,6 +1678,9 @@
                     
                     await renderReportView(dateToLoad.getFullYear(), dateToLoad.getMonth());
                     
+                    // Update footer user info
+                    updateFooterUserInfo();
+                    
                     document.getElementById('loader').style.display = 'none';
                     document.getElementById('app-content').classList.remove('hidden');
                     
@@ -294,7 +1692,151 @@
             });
         }
 
+        // Filter and pagination functions
+        function applyFilters() {
+            filteredTrades = allTrades.filter(trade => {
+                const matchesSearch = currentFilters.search === '' || 
+                    trade.date.includes(currentFilters.search) || 
+                    trade.profit.toString().includes(currentFilters.search);
+                
+                const matchesResult = currentFilters.result === 'all' || 
+                    (currentFilters.result === 'positive' && trade.profit > 0) ||
+                    (currentFilters.result === 'negative' && trade.profit < 0);
+                
+                // Date range filter
+                let matchesDateRange = true;
+                if (currentFilters.dateFrom || currentFilters.dateTo) {
+                    const tradeDate = new Date(trade.date);
+                    if (currentFilters.dateFrom) {
+                        const fromDate = new Date(currentFilters.dateFrom);
+                        matchesDateRange = matchesDateRange && tradeDate >= fromDate;
+                    }
+                    if (currentFilters.dateTo) {
+                        const toDate = new Date(currentFilters.dateTo);
+                        matchesDateRange = matchesDateRange && tradeDate <= toDate;
+                    }
+                }
+                
+                return matchesSearch && matchesResult && matchesDateRange;
+            });
+            
+            // Apply sorting
+            const sortOrder = currentFilters.sortOrder || 'desc';
+            filteredTrades.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+            });
+            
+            displayedTradesCount = 0;
+            const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+            const monthlyInitialBalance = userSettings.monthlyBalances[monthKey] || 0;
+            renderReportTable(filteredTrades, monthlyInitialBalance);
+        }
+        
+        function updateLoadMoreButton(totalItems) {
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            if (displayedTradesCount < totalItems) {
+                loadMoreBtn.classList.remove('hidden');
+            } else {
+                loadMoreBtn.classList.add('hidden');
+            }
+        }
+        
+        function loadMoreOperations() {
+            const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+            const monthlyInitialBalance = userSettings.monthlyBalances[monthKey] || 0;
+            renderReportTable(filteredTrades, monthlyInitialBalance, true);
+        }
+        
+        // Initial balance functions
+        function updateInitialBalanceDisplay(balance) {
+            const balanceValue = document.getElementById('initial-balance-value');
+            const currencySymbol = userSettings.currency === 'BRL' ? 'R$' : '$';
+            balanceValue.textContent = `${currencySymbol} ${balance.toFixed(2).replace('.', ',')}`;
+        }
+        
+        function toggleInitialBalanceEdit() {
+            const display = document.getElementById('initial-balance-display');
+            const edit = document.getElementById('initial-balance-edit');
+            const input = document.getElementById('edit-initial-balance');
+            const select = document.getElementById('edit-currency');
+            
+            if (edit.classList.contains('hidden')) {
+                // Show edit mode
+                const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+                const currentBalance = userSettings.monthlyBalances[monthKey] || 0;
+                input.value = currentBalance.toFixed(2);
+                select.value = userSettings.currency;
+                
+                display.classList.add('hidden');
+                edit.classList.remove('hidden');
+                input.focus();
+            } else {
+                // Hide edit mode
+                display.classList.remove('hidden');
+                edit.classList.add('hidden');
+            }
+        }
+        
+        async function saveInitialBalance() {
+            const input = document.getElementById('edit-initial-balance');
+            const select = document.getElementById('edit-currency');
+            const newBalance = parseFloat(input.value) || 0;
+            const newCurrency = select.value;
+            
+            const monthKey = `${currentReportDate.getFullYear()}-${currentReportDate.getMonth()}`;
+            userSettings.monthlyBalances[monthKey] = newBalance;
+            userSettings.currency = newCurrency;
+            
+            // Save to Firebase
+            try {
+                const userDocRef = doc(db, "users", userId);
+                await setDoc(userDocRef, { settings: userSettings }, { merge: true });
+                
+                updateInitialBalanceDisplay(newBalance);
+                toggleInitialBalanceEdit();
+                
+                // Refresh the report view
+                renderReportView(currentReportDate.getFullYear(), currentReportDate.getMonth());
+            } catch (error) {
+                console.error('Error saving initial balance:', error);
+                alert('Erro ao salvar o saldo inicial. Tente novamente.');
+            }
+        }
+
+        // Update footer user info
+        function updateFooterUserInfo() {
+            const footerUserInfo = document.getElementById('footer-user-info');
+            if (footerUserInfo && auth.currentUser) {
+                const user = auth.currentUser;
+                const displayName = user.displayName || user.email?.split('@')[0] || 'Usuário';
+                footerUserInfo.textContent = `Usuário: ${displayName}`;
+            }
+        }
+
+        // Make functions globally available
+         window.toggleOperationDetails = toggleOperationDetails;
+         window.saveDailyNotes = saveDailyNotes;
+         window.openSettingsModal = openSettingsModal;
+         window.closeSettingsModal = closeSettingsModal;
+         window.saveSettings = saveSettings;
+         window.toggleInitialBalanceEdit = toggleInitialBalanceEdit;
+         window.saveInitialBalance = saveInitialBalance;
+         window.loadMoreOperations = loadMoreOperations;
+         window.updateFooterUserInfo = updateFooterUserInfo;
+
         main();
     </script>
+    
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center z-30">
+        <button id="nav-dashboard-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="layout-dashboard"></i><span class="text-xs mt-1">Dashboard</span></button>
+        <button class="nav-btn flex flex-col items-center text-blue-500"><i data-lucide="bar-chart-3"></i><span class="text-xs mt-1">Relatório</span></button>
+        <button id="nav-history-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="history"></i><span class="text-xs mt-1">Histórico</span></button>
+        <button id="nav-settings-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="settings"></i><span class="text-xs mt-1">Ajustes</span></button>
+    </nav>
+    
+
 </body>
 </html>

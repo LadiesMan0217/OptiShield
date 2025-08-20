@@ -39,6 +39,120 @@
         .btn-danger:hover:not(:disabled) { background-color: #f87171; }
         .btn-danger:disabled { background-color: var(--danger); opacity: 0.5; cursor: not-allowed; }
         .btn-secondary { background: var(--input-bg); color: var(--fg); }
+        
+        /* Bottom navigation enhancements */
+        nav .nav-btn {
+            transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 0.5rem;
+            margin: 0 0.125rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        nav .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        nav .nav-btn:hover::before {
+            left: 100%;
+        }
+        
+        nav .nav-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+        }
+        
+        nav .nav-btn.text-blue-500 {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #3b82f6 !important;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Enhanced interactions */
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        /* Smooth loading states */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid var(--card-border);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Tablet styles */
+        @media (max-width: 1024px) and (min-width: 641px) {
+            .card {
+                padding: 1.25rem;
+            }
+            .modal-content {
+                width: 90vw;
+                max-width: 500px;
+            }
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 640px) {
+            .card {
+                padding: 1rem;
+                margin-bottom: 1rem;
+            }
+            
+            .modal-content {
+                width: 95vw;
+                padding: 1.5rem;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            /* Bottom navigation improvements */
+            nav .nav-btn { padding: 0.5rem 0.25rem; min-height: 3.5rem; }
+            nav .nav-btn span { font-size: 0.7rem; }
+            nav .nav-btn i { width: 1.25rem; height: 1.25rem; }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .card {
+                padding: 0.75rem;
+            }
+            
+            .modal-content {
+                padding: 1rem;
+            }
+            
+            header h1 {
+                font-size: 1.25rem;
+            }
+        }
     </style>
 </head>
 <body class="p-4 sm:p-6">
@@ -222,6 +336,26 @@
         const auth = getAuth(app);
 
         function initializeEventListeners() {
+            // Navigation back button
+            document.querySelector('.nav-back').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'index.html';
+            });
+            
+            // Bottom navigation events
+            document.getElementById('nav-dashboard-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'index.html';
+            });
+            document.getElementById('nav-report-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'report.html';
+            });
+            document.getElementById('nav-history-btn').addEventListener('click', () => {
+                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+                window.location.href = baseUrl + 'historico.html';
+            });
+            
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 const newName = document.getElementById('profile-name').value;
                 const user = auth.currentUser;
@@ -376,9 +510,6 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 // User is signed in, show the content
-                const [firstName, ...lastNameParts] = (user.displayName || 'Usuário Anônimo').split(' ');
-                document.getElementById('display-name').textContent = firstName;
-                document.getElementById('display-surname').textContent = lastNameParts.join(' ');
                 document.getElementById('profile-name').value = user.displayName || '';
                 
                 const emailEl = document.getElementById('display-email');
@@ -390,16 +521,36 @@
                 const lastLogin = new Date(user.metadata.lastSignInTime).toLocaleString('pt-BR');
                 document.getElementById('last-login-time').textContent = lastLogin;
                 
+                // Show the content only for authenticated users
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('app-content').classList.remove('hidden');
                 lucide.createIcons();
                 initializeEventListeners();
             } else {
-                // User is signed out, redirect to login page
-                const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
-                window.location.href = baseUrl + 'login.html';
+                // User is not signed in, show popup and redirect to login
+                document.getElementById('loader').style.display = 'none';
+                
+                // Show informative popup
+                const userConfirmed = confirm('Acesso Restrito\n\nEsta página requer autenticação para ser acessada. Você será redirecionado para a página de login.\n\nClique em "OK" para continuar ou "Cancelar" para permanecer nesta página.');
+                
+                if (userConfirmed) {
+                    window.location.href = 'login.html';
+                } else {
+                    // If user cancels, still redirect after a short delay
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                }
             }
         });
     </script>
+    
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="fixed bottom-0 left-0 right-0 h-16 bg-zinc-100 dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex justify-around items-center z-30">
+        <button id="nav-dashboard-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="layout-dashboard"></i><span class="text-xs mt-1">Dashboard</span></button>
+        <button id="nav-report-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="bar-chart-3"></i><span class="text-xs mt-1">Relatório</span></button>
+        <button id="nav-history-btn" class="nav-btn flex flex-col items-center text-zinc-500 dark:text-zinc-400"><i data-lucide="history"></i><span class="text-xs mt-1">Histórico</span></button>
+        <button class="nav-btn flex flex-col items-center text-blue-500"><i data-lucide="settings"></i><span class="text-xs mt-1">Ajustes</span></button>
+    </nav>
 </body>
 </html>
